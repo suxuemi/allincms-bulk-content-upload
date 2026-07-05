@@ -1,4 +1,5 @@
 interface:
   display_name: "AllinCMS Bulk Upload"
   short_description: "Turn source files into confirmed AllinCMS site packages, then upload after live schema checks"
-  default_prompt: "Use $allincms-bulk-content-upload to turn user source files into a source-backed wiki and site content package, validate confirmation/schema gates, then start read-only in AllinCMS, inspect the site or create-site flow, map the current content type, and request explicit action-time authorization before creating sites, drafts, uploads, saves, publishes, deletes, or batch operations."
+  default_prompt: "Use $allincms-bulk-content-upload to turn user source files into a source-backed wiki and site content package, validate confirmation/schema gates, then start read-only in AllinCMS, inspect the site or create-site flow, map the current content type, and request explicit action-time authorization before creating sites, drafts, uploads, saves, publishes, deletes, or batch operations. Read SKILL.md for the full operating contract and non-negotiable safety gates before acting; this card is only an entry summary."
+  contract: "SKILL.md"
