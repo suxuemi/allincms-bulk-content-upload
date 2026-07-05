@@ -36,6 +36,8 @@ ln -s "$HOME/skills/allincms-bulk-content-upload" "$HOME/.codex/skills/allincms-
 ln -s "$HOME/skills/allincms-bulk-content-upload" "$HOME/.claude/skills/allincms-bulk-content-upload"
 ```
 
+Step 2 is also bundled as an installer — from inside the clone, run **`./install.sh`** (optionally `codex` / `claude` to pick one tool, `--force` to repoint a stale symlink). It is idempotent and **never touches a real file or directory** — it only ever creates or replaces a symlink.
+
 | Tool | How it loads | Entry file |
 |---|---|---|
 | **Claude Code** | Skill tool, invoked as `allincms-bulk-content-upload` | `SKILL.md` (+ `CLAUDE.md` if the repo is opened as a project) |
