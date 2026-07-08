@@ -82,8 +82,7 @@ schema,再按 gate 授权上传)。
 
 ## 未尽事项 / 注意
 
-- skill 已从原知识库 `302_数据结构` 完全迁出,那边只留一份历史交接记录
-  `ops/status/allincms-skill-handoff.md`;别再去 302 找 skill 本体。
+- 本仓库即 skill 真身,不要在别处找旧副本或历史目录;有旧副本请从本仓库重新同步。
 - 软链是本机文件系统状态,不进 git;换机器/重装后跑 `./install.sh` 重建。
 - 真实 AllinCMS live E2E(用户文件→建站→上传→发布→前后台验收)仍是最大的待验证项,
   需浏览器实操,先证明登录态与 siteKey。

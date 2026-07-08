@@ -734,7 +734,7 @@ After changing this skill package, run:
 PYTHONPYCACHEPREFIX=/tmp/allincms-pycache python3 -m py_compile \
   skills/allincms-bulk-content-upload/scripts/*.py
 python3 skills/allincms-bulk-content-upload/scripts/audit_skill_hygiene.py
-python3 /Users/tony/.codex/skills/.system/skill-creator/scripts/quick_validate.py \
+python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py \
   skills/allincms-bulk-content-upload
 ```
 

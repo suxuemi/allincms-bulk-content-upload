@@ -876,7 +876,7 @@ For a reusable problem, record the smallest neutral lesson that prevents future 
 - Symptom: running `python3 skills/allincms-bulk-content-upload/scripts/quick_validate.py` failed because this skill does not bundle a local `quick_validate.py`.
 - Evidence: Python returned `can't open file .../skills/allincms-bulk-content-upload/scripts/quick_validate.py: [Errno 2] No such file or directory`, while `SKILL.md` already points to the system skill-creator validator path.
 - Risk: an operator can misreport validation failure or skip the actual skill validator by using a stale handoff command.
-- Rule: after changing this skill package, run the bundled AllinCMS hygiene audit plus the system validator path from `SKILL.md`: `python3 /Users/tony/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/allincms-bulk-content-upload`.
+- Rule: after changing this skill package, run the bundled AllinCMS hygiene audit plus the system validator path from `SKILL.md`: `python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/allincms-bulk-content-upload`.
 - Follow-up: no helper script change needed; use the documented validator command as authority when handoff notes disagree.
 
 ## 2026-07-01 Media Upload Dialog Probe And Helper Findings
