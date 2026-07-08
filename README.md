@@ -17,6 +17,27 @@
 
 ## 快速开始
 
+两种方式,不想碰命令行就用**方式 A**。
+
+### 方式 A · 把一句话丢给你的 AI(推荐,零命令行)
+
+如果你在用 Claude Code、Codex 这类**能执行命令的 AI 助手**,直接把下面这段话整段复制给它 —— 它会自己 clone、安装、验证,并用中文告诉你怎么用:
+
+```text
+帮我安装并配置 allincms-bulk-content-upload 这个 AI skill:
+1）把 https://github.com/suxuemi/allincms-bulk-content-upload 克隆到 ~/skills/allincms-bulk-content-upload(若已存在就 git pull 更新);
+2）进入该目录运行 ./install.sh,它会把 skill 软链进 ~/.codex/skills 和 ~/.claude/skills(脚本幂等,不会碰真实文件,只建软链);
+3）验证 ~/.codex/skills/allincms-bulk-content-upload/SKILL.md 和 ~/.claude/skills/allincms-bulk-content-upload/SKILL.md 都能读到;
+4）读一下 SKILL.md 和 README.md,用中文告诉我:这个 skill 能干什么、用它之前我需要准备什么(比如 AllinCMS 后台登录态、源料文件、以及你这个 AI 工具是否已具备浏览器控制能力)、现在怎么开始建第一个站。
+装完如果工具只在启动时扫描 skill,提醒我重启工具。
+```
+
+AI 跑命令时会请求你确认,你看一眼它在装什么再放行即可;装完它会直接带你进入下一步。
+
+> 注意:skill 本体(clone + 软链)AI 能自动装好,但**操作 AllinCMS 需要 AI 工具具备浏览器控制能力**(如 Claude Code 的浏览器扩展、Codex 的内置浏览器)—— 这类工具侧扩展 AI 装不了,得你在工具里开;上面第 4 步会让它检查并告诉你缺不缺。
+
+### 方式 B · 手动命令行
+
 **第一步:拉下仓库**
 
 ```bash
