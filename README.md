@@ -1,69 +1,88 @@
 # allincms-bulk-content-upload
 
-An AI **skill** (agent operating contract) for building and populating [AllinCMS / LAICMS](https://www.allincms.com) sites: turn a user's source material — PDFs, DOCX, spreadsheets, websites, a written brief — into a source-backed wiki and a confirmed content package, then create or select a site, inspect its live schema, and upload/publish products, posts, media, themes, routes, and pages — verifying backend and frontend state at every step.
+一个 AI **skill**(给 AI 编程助手用的"操作契约"),用于搭建和填充 [AllinCMS / LAICMS](https://www.allincms.com) 站点:把你的源料 —— PDF、DOCX、表格、网站、一份文字 brief —— 提炼成本地知识库和一份"确认过的内容包",然后新建或选择站点、实测它的当前字段结构,再上传/发布产品、文章、媒体、主题、路由和页面,**每一步都回读后台 + 前台核验**。
 
-This repository is the **single source** for that skill. Claude Code, Codex, and other AI tools load the same contract; this README and the thin `AGENTS.md` / `CLAUDE.md` entry files point every tool at it rather than copying it.
+本仓库是这个 skill 的**唯一真身**。Claude Code、Codex 和其它 AI 工具加载的是同一份契约;这份 README 和薄入口文件 `AGENTS.md` / `CLAUDE.md` 只是把各工具指向它,不复制它。
 
-> **The authoritative contract is [`SKILL.md`](SKILL.md).** Everything here is a map to it. If this README and `SKILL.md` ever disagree, `SKILL.md` wins.
+> **权威契约是 [`SKILL.md`](SKILL.md),它是唯一真相源。** 本文档只是通往它的地图;如果本 README 和 `SKILL.md` 有出入,以 `SKILL.md` 为准。
 
-## What it does
+> **文档语言说明**:给人读的入口(本 README、`NEXT-SESSION.md`)是中文;给 AI 读的契约(`SKILL.md`、`AGENTS.md`、`CLAUDE.md`、`references/`)是英文——这是刻意设计,不是没写完。AI 读英文契约无障碍,翻译反而会造成两份漂移。
 
-- **Source → package.** Distill user source files into a local source-backed wiki, then a publish-ready draft package: single-page/product/post/site-info drafts, plus a media / form / navigation / category plan. Nothing is fabricated — PII, contact details, and prices are user-supplied only.
-- **Confirm, then build.** The user reviews the prepared package once. Only then does the skill touch the live site.
-- **JSON-first execution.** After one live save-capture, replay via the Next Server Action instead of simulating the UI: content (categories/products/posts) as JSON batches, theme design captured via CDP, with site-creation and local-image→CDN media upload as the genuinely UI-only steps.
-- **Verify everything.** Every create/save/publish is checked against live backend re-read and public frontend state — not against the producer's own summary.
+## 这个 skill 能做什么
 
-## Safety model (non-negotiable)
+- **源料 → 内容包**:把源文件提炼成本地知识库,再生成可发布的草稿包(单页/产品/文章/站点信息草稿,外加媒体、表单、导航、分类计划)。**不编造任何东西** —— 联系方式、价格这类只能你提供。
+- **先确认,再动手**:你先审一遍准备好的内容包,skill 才会碰线上站点。
+- **JSON 优先执行**:抓一次真实保存请求后,直接用 Next Server Action 回放,而不是模拟点界面 —— 内容(分类/产品/文章)走 JSON 批量,主题设计走 CDP 抓取,只有建站和"本地图片→CDN"上传是真正需要点界面的步骤。
+- **一切都核验**:每次新建/保存/发布都回读线上后台 + 公开前台确认,而不是听 AI 自己说"做好了"。
 
-This skill touches shared remote state, so safety is enforced in code (`scripts/check_pre_mutation_gate.py`), not just prose:
+## 快速开始
 
-- **Read-only by default.** No site is mutated until the user explicitly authorizes it.
-- **A gate before every remote mutation.** Each create/save/publish/upload/delete/batch action must pass the pre-mutation gate (preflight freshness, schema verification, sample proof, evidence, action record) — a gate failure stops the run.
-- **Run-scoped authorization, with hard carve-outs.** One upfront grant can auto-cover the repetitive in-scope content build (no re-prompting), but it **expires** (default 8h TTL) and never covers carve-outs: creating a new site, delete/cleanup/unpublish, outward-facing settings (domains, tracking, forms), or any other site — those always require a fresh explicit authorization. See [`references/mutation-safety.md`](references/mutation-safety.md).
-- **No business data at rest.** Real site keys, cookies, tokens, credentials, contact lists, and PII never live in this repo — only neutral field names, route shapes, and redacted evidence needed to prove platform behavior.
-
-## Using it from different AI tools
-
-The skill is discovered through `SKILL.md`. The recommended layout keeps one real copy and links it into each tool:
+**第一步:拉下仓库**
 
 ```bash
-# 1. Clone this repo as the single source
-git clone <repo-url> "$HOME/skills/allincms-bulk-content-upload"
-
-# 2. Link it into each tool's skill folder (symlink = one source, no drift)
-mkdir -p "$HOME/.codex/skills" "$HOME/.claude/skills"
-ln -s "$HOME/skills/allincms-bulk-content-upload" "$HOME/.codex/skills/allincms-bulk-content-upload"
-ln -s "$HOME/skills/allincms-bulk-content-upload" "$HOME/.claude/skills/allincms-bulk-content-upload"
+git clone https://github.com/suxuemi/allincms-bulk-content-upload.git "$HOME/skills/allincms-bulk-content-upload"
 ```
 
-Step 2 is also bundled as an installer — from inside the clone, run **`./install.sh`** (optionally `codex` / `claude` to pick one tool, `--force` to repoint a stale symlink). It is idempotent and **never touches a real file or directory** — it only ever creates or replaces a symlink.
+> 这是**私有仓**,你需要先被加为协作者(collaborator)、并配好 GitHub SSH key 或 token 才能 clone。
 
-| Tool | How it loads | Entry file |
+**第二步:挂到你的 AI 工具**
+
+从仓库根目录跑自带安装脚本,它会把本仓库软链进 Claude Code 和 Codex 的 skill 目录:
+
+```bash
+cd "$HOME/skills/allincms-bulk-content-upload"
+./install.sh                    # 同时装进 codex 和 claude
+# ./install.sh codex            # 只装其中一个
+# ./install.sh claude --force   # 只重新指向已失效的软链
+```
+
+`install.sh` 是**幂等**的(重复跑没副作用),而且**绝不碰真实文件或目录** —— 只会创建或替换软链。装完如果工具只在启动时扫描 skill,重启一下工具即可。
+
+**第三步:在对话里用它**
+
+- **Claude Code / Codex**:直接让助手调用 skill `allincms-bulk-content-upload`,它会读 `SKILL.md` 带你走全流程 —— 先只读实测站点结构,再按安全闸逐步授权上传。
+- 你只需要准备好源料(PDF/DOCX/表格/官网/brief),把要建什么站说清楚,剩下的按它的提示走。
+
+## ⚠️ 注意事项(务必先读)
+
+这个 skill 会动**线上共享状态**,所以安全规则是写进代码强制的(`scripts/check_pre_mutation_gate.py`),不只是嘴上说说:
+
+- **默认只读**。你没有明确授权之前,它不会改动任何站点。
+- **每次线上改动前都过一道闸**。新建/保存/发布/上传/删除/批量,都必须通过"改动前门禁"(检查数据新鲜度、字段结构已验证、样本已证明、证据齐全、留有操作记录)—— **门禁不过就停,不会硬闯**。
+- **一次授权也不是空白支票**。你可以在确认内容包时给一次"全程授权"免掉反复确认,但它会**过期**(默认 8 小时),而且永远盖不住这些高危动作:**建新站、删除/清理/下架、对外设置(域名/追踪/表单)、以及任何别的站点** —— 这些每次都要你重新明确授权。
+- **绝不编造**。联系方式、价格、证书、评价、地址,只能你提供,它不会自己填。
+- **本地不留业务数据**。真实站点 key、cookie、token、账号、联系人名单绝不写进本仓库 —— 仓库里只有中性的字段名、路由形状和脱敏后的证据。
+- **改动只由单一控制者执行**。并行的 AI 只能做只读检查,真正的线上写操作永远单线程、走完门禁再做。
+
+## 在不同 AI 工具里使用
+
+| 工具 | 怎么加载 | 入口文件 |
 |---|---|---|
-| **Claude Code** | Skill tool, invoked as `allincms-bulk-content-upload` | `SKILL.md` (+ `CLAUDE.md` if the repo is opened as a project) |
-| **Codex** | `~/.codex/skills/` symlink | `SKILL.md` (+ `AGENTS.md` if the repo is opened as a project) |
-| **Other agents** (Cursor, Gemini CLI, …) | Read `AGENTS.md` at repo root | `AGENTS.md` → `SKILL.md` |
-| **OpenAI-style interface** | `agents/openai.yaml` card | `agents/openai.yaml` → `SKILL.md` |
+| **Claude Code** | Skill 工具,调用名 `allincms-bulk-content-upload` | `SKILL.md`(仓库当项目打开时另读 `CLAUDE.md`) |
+| **Codex** | `~/.codex/skills/` 软链 | `SKILL.md`(仓库当项目打开时另读 `AGENTS.md`) |
+| **其它 agent**(Cursor、Gemini CLI…) | 读仓库根的 `AGENTS.md` | `AGENTS.md` → `SKILL.md` |
+| **OpenAI 式接口** | `agents/openai.yaml` 卡片 | `agents/openai.yaml` → `SKILL.md` |
 
-`AGENTS.md` and `CLAUDE.md` matter mainly when this repo is opened **as a project**; when it is loaded **as a skill**, the loader reads `SKILL.md` directly. Both paths converge on the same contract.
+`AGENTS.md` 和 `CLAUDE.md` 主要在**仓库被当项目打开**时起作用;当它**作为 skill 加载**时,loader 直接读 `SKILL.md`。两条路最终汇到同一份契约。
 
-If symlinks are unavailable, copy the whole directory into the tool's skill folder — but then keep exactly one long-lived copy authoritative and re-sync the others from this repo.
+如果环境不支持软链,把整个目录复制进工具的 skill 文件夹 —— 但只保留一份为权威,其余从本仓库重新同步。
 
-## Repository layout
+## 目录结构
 
-| Path | What lives there |
+| 路径 | 放什么 |
 |---|---|
-| [`SKILL.md`](SKILL.md) | The authoritative operating contract: operating rule, required reading, workflow, browser paths, probe/payload rules, stop conditions |
-| [`AGENTS.md`](AGENTS.md) | Thin agent entry (generic `agents.md` standard) → points at `SKILL.md` |
-| [`CLAUDE.md`](CLAUDE.md) | Thin Claude Code entry → points at `AGENTS.md` + `SKILL.md` |
-| `references/` | Deep contracts: Server-Action save API, mutation safety, field mapping, request capture, launch acceptance, and more |
-| `scripts/` | Enforcement + helpers: the pre-mutation gate, authorization builders, manifest/evidence validators, simulators, and their `test_*.py` |
-| `agents/` | Per-tool interface cards (`openai.yaml`) |
-| `_archive/` | Retired build logs kept for recovery, out of the active contract |
+| [`SKILL.md`](SKILL.md) | 权威操作契约:操作规则、必读、工作流、浏览器路径、探针/载荷规则、停止条件 |
+| [`AGENTS.md`](AGENTS.md) | 通用 agent 薄入口(`agents.md` 标准)→ 指向 `SKILL.md` |
+| [`CLAUDE.md`](CLAUDE.md) | Claude Code 薄入口 → 指向 `AGENTS.md` + `SKILL.md` |
+| [`NEXT-SESSION.md`](NEXT-SESSION.md) | 给接手维护的新会话的启动稿(中文) |
+| `references/` | 深度契约:Server-Action 保存 API、改动安全、字段映射、请求抓取、上线验收等 |
+| `scripts/` | 强制 + 辅助工具:改动前门禁、授权构建器、清单/证据校验器、模拟器,及各自的 `test_*.py` |
+| `agents/` | 各工具的接口卡片(`openai.yaml`) |
+| `_archive/` | 退役的历史构建日志,留作追溯,不属活跃契约 |
 
-## Repository safety
+## 仓库安全
 
-This repo is GitHub-maintained and reusable across devices. Keep it generic and clean:
+本仓库在 GitHub 维护、跨设备复用。保持它通用、干净:
 
-- **Do** include the operating contract, references, helper scripts, tests, and install instructions.
-- **Do not** include customer data, secrets, production credentials, real site keys, cookies/tokens, contact lists, or account-specific business copy. Placeholder site keys in tests are neutral (e.g. `mysite01`), never real.
+- **要**放:操作契约、references、辅助脚本、测试、安装说明。
+- **不要**放:客户数据、密钥、生产凭证、真实站点 key、cookie/token、联系人名单、账号相关的业务文案。测试里的占位 key 都是中性的(如 `mysite01`),绝非真实值。
