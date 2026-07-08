@@ -26,10 +26,11 @@
 ```text
 帮我安装并配置 allincms-bulk-content-upload 这个 AI skill:
 1）把 https://github.com/suxuemi/allincms-bulk-content-upload 克隆到 ~/skills/allincms-bulk-content-upload(若已存在就 git pull 更新);
-2）进入该目录运行 ./install.sh,它会把 skill 软链进 ~/.codex/skills 和 ~/.claude/skills(脚本幂等,不会碰真实文件,只建软链);
-3）验证 ~/.codex/skills/allincms-bulk-content-upload/SKILL.md 和 ~/.claude/skills/allincms-bulk-content-upload/SKILL.md 都能读到;
-4）读一下 SKILL.md 和 README.md,用中文告诉我:这个 skill 能干什么、用它之前我需要准备什么(比如 AllinCMS 后台登录态、源料文件、以及你这个 AI 工具是否已具备浏览器控制能力)、现在怎么开始建第一个站。
-装完如果工具只在启动时扫描 skill,提醒我重启工具。
+2）进入该目录运行 ./install.sh —— 它会自动探测本机已装的 AI 工具(Claude Code / Codex / WorkBuddy 等)并把 skill 软链进各自的 skills 目录(脚本幂等,绝不碰真实文件,只建软链);若你这个 AI 工具的 skills 目录不在默认探测范围,改用 ./install.sh --dir=<你的skills目录> 指定;
+3）验证软链能读到 SKILL.md;
+4）判断你这个工具支不支持 SKILL.md 格式的 skill:支持就确认已能发现它;若不支持(用的是别的插件/扩展机制),就直接把本仓库的 SKILL.md 当作操作契约读取并遵循,不必安装;
+5）读 SKILL.md 和 README.md,用中文告诉我:这个 skill 能干什么、用它之前我要准备什么(AllinCMS 后台登录态、源料文件、以及你是否具备浏览器控制能力)、现在怎么开始建第一个站。
+装完如果工具只在启动时扫描 skill,提醒我重启。
 ```
 
 AI 跑命令时会请求你确认,你看一眼它在装什么再放行即可;装完它会直接带你进入下一步。
@@ -48,13 +49,15 @@ git clone https://github.com/suxuemi/allincms-bulk-content-upload.git "$HOME/ski
 
 **第二步:挂到你的 AI 工具**
 
-从仓库根目录跑自带安装脚本,它会把本仓库软链进 Claude Code 和 Codex 的 skill 目录:
+从仓库根目录跑自带安装脚本,它会**自动探测本机已装的 AI 工具**(Claude Code / Codex / WorkBuddy)并软链进各自的 skill 目录:
 
 ```bash
 cd "$HOME/skills/allincms-bulk-content-upload"
-./install.sh                    # 同时装进 codex 和 claude
-# ./install.sh codex            # 只装其中一个
-# ./install.sh claude --force   # 只重新指向已失效的软链
+./install.sh                        # 自动探测已装工具,各自软链
+# ./install.sh codex                # 只装指定工具
+# ./install.sh claude workbuddy     # 装多个指定工具
+# ./install.sh --dir=/你的/skills   # 其它工具:软链进它的 skills 目录
+# ./install.sh claude --force       # 重新指向已失效的软链
 ```
 
 `install.sh` 是**幂等**的(重复跑没副作用),而且**绝不碰真实文件或目录** —— 只会创建或替换软链。装完如果工具只在启动时扫描 skill,重启一下工具即可。
@@ -77,12 +80,16 @@ cd "$HOME/skills/allincms-bulk-content-upload"
 
 ## 在不同 AI 工具里使用
 
-| 工具 | 怎么加载 | 入口文件 |
+| 工具 | 怎么加载 | 兼容性 |
 |---|---|---|
-| **Claude Code** | Skill 工具,调用名 `allincms-bulk-content-upload` | `SKILL.md`(仓库当项目打开时另读 `CLAUDE.md`) |
-| **Codex** | `~/.codex/skills/` 软链 | `SKILL.md`(仓库当项目打开时另读 `AGENTS.md`) |
-| **其它 agent**(Cursor、Gemini CLI…) | 读仓库根的 `AGENTS.md` | `AGENTS.md` → `SKILL.md` |
+| **Claude Code** | `~/.claude/skills/` 软链,调用名 `allincms-bulk-content-upload` | 原生 SKILL.md,直接可用 |
+| **Codex** | `~/.codex/skills/` 软链 | 原生 SKILL.md,直接可用 |
+| **WorkBuddy** | `~/.workbuddy/skills/` 软链(install.sh 自动探测) | WorkBuddy 用自有 skill 格式;软链会建好,但能否发现 SKILL.md 需在其内实测 |
+| **其它读 `agents.md` 的**(Cursor、Gemini CLI…) | 读仓库根 `AGENTS.md` | `AGENTS.md` → `SKILL.md` |
+| **用别的插件机制的**(如 zcode) | 不走 skills 目录 | 直接把本仓库 `SKILL.md` 当操作契约喂给它,不必安装 |
 | **OpenAI 式接口** | `agents/openai.yaml` 卡片 | `agents/openai.yaml` → `SKILL.md` |
+
+**兼容性底线**:这个 skill 的本体是一份 `SKILL.md` 契约 + 一组脚本。凡是能读 SKILL.md 的工具都能用 —— 支持"skills 目录自动发现"的(Claude / Codex 等)靠软链自动触发;不支持的,直接让 AI 读 `SKILL.md` 照做即可,一样能用,只是不自动触发。
 
 `AGENTS.md` 和 `CLAUDE.md` 主要在**仓库被当项目打开**时起作用;当它**作为 skill 加载**时,loader 直接读 `SKILL.md`。两条路最终汇到同一份契约。
 

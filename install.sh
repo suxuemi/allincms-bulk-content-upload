@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # Install this skill for local AI tools by symlinking THIS repo into each tool's
-# skill folder (~/.codex/skills, ~/.claude/skills). Run it from inside the clone:
+# skills folder. Works with any tool that discovers the SKILL.md format from a
+# skills directory (Claude Code, Codex, WorkBuddy, …).
 #
-#   ./install.sh                 # link into both codex and claude
-#   ./install.sh codex           # only codex
-#   ./install.sh claude --force  # only claude; repoint an existing symlink
+#   ./install.sh                       # auto-detect installed tools and link into each
+#   ./install.sh codex                 # only Codex
+#   ./install.sh claude workbuddy      # pick specific tools
+#   ./install.sh --dir=/path/to/skills # any other tool's skills dir (unknown / self-managed)
+#   ./install.sh claude --force        # repoint an existing symlink
 #
-# Idempotent: re-running is safe. It NEVER deletes a real file or directory —
-# it only creates symlinks, and --force only ever replaces an existing SYMLINK.
+# Idempotent. NEVER deletes a real file or directory — it only creates symlinks,
+# and --force only ever replaces an existing SYMLINK.
+#
+# NOTE: tools that don't use the SKILL.md-in-a-skills-dir format (e.g. plugin-based
+# ones) won't discover it this way. For those, just point the AI at this repo's
+# SKILL.md directly as its operating contract — no install needed.
 set -euo pipefail
 
 SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,23 +28,46 @@ fi
 NAME="$(awk -F': *' '/^name:/{gsub(/["'\'' ]/,"",$2); print $2; exit}' "$SOURCE/SKILL.md")"
 NAME="${NAME:-$(basename "$SOURCE")}"
 
+# Known SKILL.md-format tools -> their skills directory.
+tool_dir() {
+  case "$1" in
+    codex)     echo "$HOME/.codex/skills" ;;
+    claude)    echo "$HOME/.claude/skills" ;;
+    workbuddy) echo "$HOME/.workbuddy/skills" ;;
+    *) return 1 ;;
+  esac
+}
+KNOWN_TOOLS="codex claude workbuddy"
+
 FORCE=0
 ROOTS=()
 for arg in "$@"; do
   case "$arg" in
     --force) FORCE=1 ;;
-    codex)   ROOTS+=("$HOME/.codex/skills") ;;
-    claude)  ROOTS+=("$HOME/.claude/skills") ;;
+    --dir=*) p="${arg#--dir=}"; p="${p/#\~/$HOME}"; ROOTS+=("$p") ;;
+    /*)      ROOTS+=("$arg") ;;                       # an absolute skills-dir path
+    codex|claude|workbuddy) ROOTS+=("$(tool_dir "$arg")") ;;
     -h|--help)
-      echo "Usage: ./install.sh [codex] [claude] [--force]"
-      echo "  No tool arg installs for both codex and claude."
-      echo "  --force repoints an existing SYMLINK (never touches a real directory)."
+      echo "Usage: ./install.sh [codex] [claude] [workbuddy] [--dir=/path/to/skills] [--force]"
+      echo "  No tool arg: auto-detect installed tools (~/.codex, ~/.claude, ~/.workbuddy) and link into each."
+      echo "  --dir=<path>: link into any other tool's skills directory (unknown / self-managed tools)."
+      echo "  --force: repoint an existing SYMLINK (never touches a real file or directory)."
       exit 0 ;;
     *) echo "unknown arg: $arg (see --help)" >&2; exit 2 ;;
   esac
 done
+
+# Default: auto-detect — install only for tools whose home dir actually exists,
+# so we never scatter link dirs for tools you don't have.
 if [ "${#ROOTS[@]}" -eq 0 ]; then
-  ROOTS=("$HOME/.codex/skills" "$HOME/.claude/skills")
+  for t in $KNOWN_TOOLS; do
+    d="$(tool_dir "$t")"
+    [ -d "$(dirname "$d")" ] && ROOTS+=("$d")
+  done
+fi
+if [ "${#ROOTS[@]}" -eq 0 ]; then
+  echo "No known tool detected (~/.codex, ~/.claude, ~/.workbuddy). Use --dir=<path> to target one explicitly." >&2
+  exit 1
 fi
 
 link_one() {
