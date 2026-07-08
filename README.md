@@ -86,3 +86,7 @@ cd "$HOME/skills/allincms-bulk-content-upload"
 
 - **要**放:操作契约、references、辅助脚本、测试、安装说明。
 - **不要**放:客户数据、密钥、生产凭证、真实站点 key、cookie/token、导出的名单、账号相关的业务文案。测试里的占位 key 都是中性的(如 `mysite01`),绝非真实值。
+
+## 许可证
+
+MIT — 见 [LICENSE](LICENSE)。你可以自由使用、修改、再分发,保留版权声明即可。
