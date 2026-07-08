@@ -85,7 +85,7 @@ cd "$HOME/skills/allincms-bulk-content-upload"
 | **用别的插件机制的**(如 zcode) | 不走 skills 目录 | 直接把本仓库 `SKILL.md` 当操作契约喂给它,不必安装 |
 | **OpenAI 式接口** | `agents/openai.yaml` 卡片 | `agents/openai.yaml` → `SKILL.md` |
 
-**兼容性底线**:这个 skill 的本体是一份 `SKILL.md` 契约 + 一组脚本。凡是能读 SKILL.md 的工具都能用 —— 支持"skills 目录自动发现"的(Claude / Codex 等)靠软链自动触发;不支持的,直接让 AI 读 `SKILL.md` 照做即可,一样能用,只是不自动触发。
+**兼容性底线**:这个 skill 的本体是一份 `SKILL.md` 契约 + 一组脚本。凡是能读 SKILL.md 的工具都能用它(注:真正操作 AllinCMS 站点仍需该工具本身具备浏览器控制能力,见上方「方式 A」注意)—— 支持"skills 目录自动发现"的(Claude / Codex 等)靠软链自动触发;不支持的,直接让 AI 读 `SKILL.md` 照做即可,一样能用,只是不自动触发。
 
 `AGENTS.md` 和 `CLAUDE.md` 主要在**仓库被当项目打开**时起作用;当它**作为 skill 加载**时,loader 直接读 `SKILL.md`。两条路最终汇到同一份契约。
 
