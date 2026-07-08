@@ -13,7 +13,7 @@ JSON-first 执行(内容走 Next Server Action 批量回放,主题走 CDP,建站
 
 - 真身:`~/skills/allincms-bulk-content-upload`(独立 git 仓)
 - 软链挂载:`~/.codex/skills/` + `~/.claude/skills/`(Claude Code 与 Codex 两个 loader 都能发现)
-- GitHub:`suxuemi/allincms-bulk-content-upload`(**私有仓**)
+- GitHub:`suxuemi/allincms-bulk-content-upload`(**公开仓**)
 - 入库基线:81 个 `test_*.py` + hygiene + entrypoint 审计全过;工作区应保持 clean、与 origin/main 同步
 
 ## 先读哪里(权威源 + 结构)
@@ -68,7 +68,7 @@ grep -rIoE 'laicms\.com/[a-z0-9]{6,}' --include='*.py' --include='*.md' . | sed 
 - 改契约改 `SKILL.md`;薄入口别复制契约,只保持指针(单向无环:README→全部;
   CLAUDE→AGENTS→SKILL;SKILL 不回指)。
 - 提交前:全测试绿 + hygiene + entrypoint 过。
-- 推私有仓前:扫真实 siteKey + 凭证 + PII,发现即脱敏——**私有仓也可能被缓存/索引**。
+- 推公开仓前:扫真实 siteKey + 凭证 + PII,发现即脱敏——**公开仓一定会被搜索引擎/爬虫缓存、索引**。
 - 每轮结束前做 skill 沉淀:判断有无可复用平台发现/接口变更/失败模式,记进 skill 再收尾;
   无则显式声明 "no reusable skill update needed"。
 - 改安全模型 / gate / 授权逻辑这类高风险改动,先本地验证,再启独立对抗 agent 复审,
