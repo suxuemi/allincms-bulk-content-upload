@@ -19,23 +19,19 @@
 
 两种方式,不想碰命令行就用**方式 A**。
 
-### 方式 A · 把一句话丢给你的 AI(推荐,零命令行)
+### 方式 A · 一句话让 AI 装好(通用,任何 AI 工具)
 
-如果你在用 Claude Code、Codex 这类**能执行命令的 AI 助手**,直接把下面这段话整段复制给它 —— 它会自己 clone、安装、验证,并用中文告诉你怎么用:
+核心很简单:**让 AI clone 这个仓库,把 `SKILL.md` 当操作契约读并遵循** —— 这对任何能读文件的 AI 都通用,有没有内建 skill 系统都行。软链安装只是"让支持的工具自动发现"的可选优化。把下面整段复制给你的 AI(Claude Code / Codex / WorkBuddy / zcode / 其它都行):
 
 ```text
-帮我安装并配置 allincms-bulk-content-upload 这个 AI skill:
-1）把 https://github.com/suxuemi/allincms-bulk-content-upload 克隆到 ~/skills/allincms-bulk-content-upload(若已存在就 git pull 更新);
-2）进入该目录运行 ./install.sh —— 它会自动探测本机已装的 AI 工具(Claude Code / Codex / WorkBuddy 等)并把 skill 软链进各自的 skills 目录(脚本幂等,绝不碰真实文件,只建软链);若你这个 AI 工具的 skills 目录不在默认探测范围,改用 ./install.sh --dir=<你的skills目录> 指定;
-3）验证软链能读到 SKILL.md;
-4）判断你这个工具支不支持 SKILL.md 格式的 skill:支持就确认已能发现它;若不支持(用的是别的插件/扩展机制),就直接把本仓库的 SKILL.md 当作操作契约读取并遵循,不必安装;
-5）读 SKILL.md 和 README.md,用中文告诉我:这个 skill 能干什么、用它之前我要准备什么(AllinCMS 后台登录态、源料文件、以及你是否具备浏览器控制能力)、现在怎么开始建第一个站。
-装完如果工具只在启动时扫描 skill,提醒我重启。
+把 https://github.com/suxuemi/allincms-bulk-content-upload 克隆到 ~/skills/allincms-bulk-content-upload(已存在就 git pull 更新),然后把它的 SKILL.md 当作你的操作契约完整读一遍、从此遵循 —— 这是让任何 AI 用上这个 skill 的通用方式,不管你有没有 skill 系统。
+可选(仅当你支持从某个 skills 目录自动发现 skill):再跑一下 ./install.sh,它会自动探测 ~/.codex、~/.claude、~/.workbuddy 并软链进去(或用 ./install.sh --dir=<你的skills目录> 指定你的目录),这样以后不用我再贴这段话就能自动触发;不支持就跳过这步,直接用上面读到的契约即可。
+最后读一下 SKILL.md 和 README.md,用中文告诉我:这个 skill 能干什么、用它之前我要准备什么(AllinCMS 后台登录态、源料文件、你是否具备浏览器控制能力)、现在怎么开始建第一个站。
 ```
 
 AI 跑命令时会请求你确认,你看一眼它在装什么再放行即可;装完它会直接带你进入下一步。
 
-> 注意:skill 本体(clone + 软链)AI 能自动装好,但**操作 AllinCMS 需要 AI 工具具备浏览器控制能力**(如 Claude Code 的浏览器扩展、Codex 的内置浏览器)—— 这类工具侧扩展 AI 装不了,得你在工具里开;上面第 4 步会让它检查并告诉你缺不缺。
+> 注意:clone 和读契约 AI 能自动完成,但**操作 AllinCMS 需要 AI 工具本身具备浏览器控制能力**(如 Claude Code 的浏览器扩展、Codex 的内置浏览器)—— 这类工具侧扩展 AI 装不了,得你在工具里开;上面那段 prompt 会让它检查并告诉你缺不缺。
 
 ### 方式 B · 手动命令行
 
