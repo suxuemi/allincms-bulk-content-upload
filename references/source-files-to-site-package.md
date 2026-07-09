@@ -492,6 +492,10 @@ Source images arrive as local files. `extract_source_materials.py` records each 
 `upload_media_via_picgo.py` closes that gap. It scans a distilled `allincms_source_wiki` for local image references, uploads them through a PicGo local server, then rewrites every occurrence of each local path (in `media[]`, `mediaNeeds`, and body text) to the returned hosted URL:
 
 ```bash
+# 0) Check PicGo is reachable first (fast TCP probe; on failure prints cross-platform setup
+#    guidance PLUS a no-PicGo fallback — install PicGo, or hand-upload via the AllinCMS Media module).
+python3 skills/allincms-bulk-content-upload/scripts/upload_media_via_picgo.py --check
+
 # 1) Plan only (default): see which local images WOULD upload; nothing is uploaded or rewritten.
 python3 skills/allincms-bulk-content-upload/scripts/upload_media_via_picgo.py \
   --wiki ~/allincms-projects/run/source-wiki.refined.json \
@@ -510,7 +514,7 @@ Safety rules for this step:
 
 - It is not an AllinCMS mutation. The `allincms_media_upload_map` always records `allincmsRemoteMutationsPerformed=false`. Do not confuse it with the AllinCMS create/save/publish/upload gates.
 - It is a real external publish: the returned URLs are public. Default is `--dry-run`; a real upload requires `--confirm-upload`. Run the real upload only after the user has approved the media in content confirmation (`mediaPolicy.requiresUserApprovalBeforeUpload=true`).
-- PicGo must be running locally with its server enabled and its own image host configured. Prove reachability of `http://127.0.0.1:36677/upload` before a run; a failed POST is not a content failure.
+- PicGo must be running locally with its server enabled and its own image host configured. Run `--check` first to probe `http://127.0.0.1:36677/upload`; if it is not reachable the command prints two-paths guidance — set up PicGo (cross-platform install + enable server + configure an image host), or skip PicGo and hand-upload the few images via the AllinCMS backend Media module. A real `--confirm-upload` also probes first and stops with that guidance instead of hanging 60s. A failed probe is not a content failure.
 - Feed the rewritten `source-wiki.hosted.json` into the package/rehearsal chain as the refined wiki, so downstream products/posts/pages carry hosted URLs, not local paths. Never store image bytes, PicGo config, or tokens in the skill package.
 
 Standard place in the run: after the refinement pass authors a review-ready wiki with local image references, before package confirmation. This keeps the review packet and confirmed manifests pointing at hosted URLs.

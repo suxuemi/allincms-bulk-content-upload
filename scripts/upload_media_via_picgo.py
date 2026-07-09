@@ -31,7 +31,9 @@ import json
 from pathlib import Path
 import re
 from typing import Any, Callable
+import socket
 import urllib.request
+from urllib.parse import urlparse
 
 DEFAULT_ENDPOINT = "http://127.0.0.1:36677/upload"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".avif", ".tiff"}
@@ -128,6 +130,36 @@ def collect_local_image_paths(wiki: dict[str, Any], extra_images: list[str]) -> 
         if isinstance(image, str) and image.strip():
             seen.setdefault(image.strip(), None)
     return list(seen.keys())
+
+
+def probe_picgo(endpoint: str, timeout: float = 3.0) -> tuple[bool, str]:
+    """Fast TCP probe of the PicGo local server, so a missing/stopped PicGo fails in seconds
+    with actionable guidance instead of a 60s urlopen hang / raw traceback."""
+    parsed = urlparse(endpoint)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or 36677
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True, f"PicGo server reachable at {host}:{port}"
+    except OSError as exc:
+        return False, f"PicGo server not reachable at {host}:{port} ({exc.__class__.__name__})"
+
+
+def picgo_setup_guidance(endpoint: str) -> str:
+    """Cross-platform two-paths guidance shown when PicGo is not reachable."""
+    return (
+        f"PicGo local server is not reachable at {endpoint}.\n"
+        "Local images in your content can't be auto-uploaded until it's running. Two ways forward:\n\n"
+        "A) Set up PicGo (best when you have many images to batch-upload):\n"
+        "   1. Install — macOS: `brew install --cask picgo` (or download from https://molunerfinn.com/PicGo/).\n"
+        "      Windows: `winget install Molunerfinn.PicGo` (or download from https://molunerfinn.com/PicGo/).\n"
+        "   2. Open PicGo -> Settings -> turn ON the Server (default port 36677).\n"
+        "   3. Configure an image host in PicGo (Aliyun OSS / Tencent COS / GitHub / SM.MS ...) so uploads return a public URL.\n"
+        "   4. Re-run this command (it probes the server first).\n\n"
+        "B) Skip PicGo, use the AllinCMS backend Media module (best for just a few images):\n"
+        "   Upload images by hand in the site's Media module (the UI-only media path), then reference the\n"
+        "   returned hosted URLs in your content. No PicGo needed.\n"
+    )
 
 
 def picgo_upload(paths: list[str], endpoint: str) -> list[str]:
@@ -266,6 +298,7 @@ def build(
     args: argparse.Namespace,
     *,
     uploader: Callable[[list[str], str], list[str]] = picgo_upload,
+    prober: Callable[[str], tuple[bool, str]] = probe_picgo,
 ) -> dict[str, Any]:
     wiki = load_json(args.wiki, "source wiki") if args.wiki else {}
     extra_images = list(getattr(args, "image", []) or [])
@@ -282,6 +315,9 @@ def build(
                 "ERROR: a real PicGo upload requires --confirm-upload; default is --dry-run. "
                 "Run only after the user approved the media in content confirmation."
             )
+        reachable, detail = prober(args.endpoint)
+        if not reachable:
+            raise SystemExit(picgo_setup_guidance(args.endpoint) + f"\n[{detail}]")
         hosted_urls = uploader(local_paths, args.endpoint)
 
     upload_map = build_upload_map(
@@ -322,15 +358,26 @@ def main() -> int:
     parser.add_argument("--wiki", default="", help="allincms_source_wiki JSON to scan and (optionally) rewrite")
     parser.add_argument("--image", action="append", default=[], help="Extra local image path to upload; repeatable")
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT, help="PicGo local server upload endpoint")
-    parser.add_argument("--output", required=True, help="Where to write the media upload map JSON (outside the skill)")
+    parser.add_argument("--output", default="", help="Where to write the media upload map JSON (outside the skill); required unless --check")
     parser.add_argument("--rewrite-wiki-output", default="", help="Optional path for the rewritten wiki (real upload only)")
     parser.add_argument("--dry-run", action="store_true", help="Plan only: upload nothing, rewrite nothing (default behavior when set)")
     parser.add_argument("--confirm-upload", action="store_true", help="Required to perform a real external upload")
+    parser.add_argument("--check", action="store_true", help="Only probe the PicGo server and print setup guidance; upload nothing")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
+    if args.check:
+        reachable, detail = probe_picgo(args.endpoint)
+        print(detail)
+        if not reachable:
+            print()
+            print(picgo_setup_guidance(args.endpoint))
+        return 0 if reachable else 1
+
     if not args.wiki and not args.image:
         raise SystemExit("ERROR: provide --wiki and/or at least one --image")
+    if not args.output:
+        raise SystemExit("ERROR: --output is required (unless --check)")
 
     result = build(args)
     print(f"Wrote media upload map: {result['uploadMap']}")
