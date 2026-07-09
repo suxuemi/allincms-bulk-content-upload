@@ -178,7 +178,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
                 "--verification-plan 'verify site card, backend dashboard, frontend base URL, and module routes' "
                 "--cleanup-plan 'no automatic deletion; stop before content upload' "
                 "--authorization-source '<paste current user authorization text here>' "
-                "--output /tmp/allincms-authorization-create-site.json"
+                "--output ~/allincms-projects/allincms-authorization-create-site.json"
             ),
             "sourcePackageValidation": (
                 f"python3 skills/allincms-bulk-content-upload/scripts/validate_source_site_package.py "

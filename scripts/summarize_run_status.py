@@ -193,7 +193,7 @@ def mutation_action_details(
 ) -> dict[str, str]:
     if not site_key or content_type not in CONTENT_TYPE_META:
         return {}
-    auth_path = f"/tmp/allincms-{site_key}-{content_type}-{action.replace('_', '-')}-authorization.json"
+    auth_path = f"~/allincms-projects/allincms-{site_key}-{content_type}-{action.replace('_', '-')}-authorization.json"
     make_authorization_command = (
         "python3 skills/allincms-bulk-content-upload/scripts/make_authorization_record.py "
         f"--action {action} "
@@ -232,7 +232,7 @@ def probe_action_details(site_key: str, content_type: str, evidence_path_hint: s
     english_type = str(meta["english"])
     fields = str(meta["createFields"])
     target = workspace_module_url(site_key, content_type)
-    auth_path = f"/tmp/allincms-{site_key}-{content_type}-probe-authorization.json"
+    auth_path = f"~/allincms-projects/allincms-{site_key}-{content_type}-probe-authorization.json"
     authorization_text = (
         f"授权 Codex 在 {target} 创建一个 Codex Probe - Delete Me {zh_type}草稿，"
         f"用于捕获{zh_type}字段和保存请求；本次只允许创建 probe 草稿，不发布、不删除、不批量上传，"
@@ -358,7 +358,7 @@ def cleanup_probe_action_details(
 
 
 def create_site_action_details(evidence_path_hint: str) -> dict[str, str]:
-    auth_path = "/tmp/allincms-create-site-authorization.json"
+    auth_path = "~/allincms-projects/allincms-create-site-authorization.json"
     authorization_text = (
         "授权 Codex 在 https://workspace.laicms.com/sites 提交创建站点表单；"
         "本次只允许提交创建站点并验证站点卡片、后台 dashboard、前台默认域名和模块路由，"
@@ -394,7 +394,7 @@ def create_site_action_details(evidence_path_hint: str) -> dict[str, str]:
 
 def summarize(
     data: dict[str, Any],
-    evidence_path_hint: str = "/tmp/allincms-existing-site-readonly-evidence.json",
+    evidence_path_hint: str = "~/allincms-projects/allincms-existing-site-readonly-evidence.json",
     require_created_site: bool = False,
     max_mutation_evidence_age_minutes: int = DEFAULT_MUTATION_EVIDENCE_MAX_AGE_MINUTES,
 ) -> dict[str, Any]:
@@ -608,7 +608,7 @@ def main() -> int:
 
     text = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
     if args.output:
-        Path(args.output).write_text(text, encoding="utf-8")
+        Path(args.output).expanduser().write_text(text, encoding="utf-8")
     else:
         print(text, end="")
     return 0 if summary["valid"] else 1

@@ -136,7 +136,7 @@ def main() -> int:
         return 2
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.output).write_text(json.dumps(handoff, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    Path(args.output).expanduser().write_text(json.dumps(handoff, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {args.output}")
     return 0
 

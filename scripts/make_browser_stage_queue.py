@@ -408,7 +408,7 @@ def main() -> int:
         return 2
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.output).write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    Path(args.output).expanduser().write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     ready = [item["id"] for item in queue["queue"] if item["status"] == "ready_to_request_authorization"]
     print(f"Wrote {args.output}")
     print(f"queueStages={len(queue['queue'])} ready={','.join(ready) if ready else 'none'}")

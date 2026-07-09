@@ -401,7 +401,7 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
-    output = Path(args.output)
+    output = Path(args.output).expanduser()
     output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {output}")
     return 0

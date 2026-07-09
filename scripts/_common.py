@@ -17,6 +17,7 @@ canonical versions in new code; leave the working divergent copies in place.
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -61,3 +62,13 @@ def ensure_output_outside_skill(output: str | Path) -> Path:
     if resolved == root or root in resolved.parents:
         raise SystemExit(f"ERROR: output must be written outside the skill package, got {resolved}")
     return resolved
+
+
+def default_run_root() -> Path:
+    """Cross-platform, PERSISTENT default run-folder root for the artifacts a build must
+    keep across sessions (source wiki, content package, confirmation, run state — needed to
+    resume/reuse/audit). Unlike /tmp it survives reboots and resolves on Windows too.
+    Override with $ALLINCMS_RUN_HOME; otherwise ~/allincms-projects. One-off throwaway
+    evidence may still use a temp dir, but long-lived run state belongs here."""
+    env = os.environ.get("ALLINCMS_RUN_HOME", "").strip()
+    return Path(env).expanduser() if env else Path.home() / "allincms-projects"

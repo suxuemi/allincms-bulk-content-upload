@@ -267,7 +267,7 @@ def main() -> int:
             print(f"  [run-auth] {e}", file=sys.stderr)
         return 1
     if args.output:
-        Path(args.output).write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        Path(args.output).expanduser().write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.json:
         print(json.dumps(record, ensure_ascii=False, indent=2))
     else:

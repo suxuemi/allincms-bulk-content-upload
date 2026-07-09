@@ -382,7 +382,7 @@ def main() -> int:
         "--create-authorization-output",
         "--create-action-gate-output",
         dest="create_authorization_output",
-        default="/tmp/allincms-authorization-create-site.json",
+        default="~/allincms-projects/allincms-authorization-create-site.json",
     )
     parser.add_argument("--fail-if-no-create-handoff", action="store_true")
     parser.add_argument("--json", action="store_true")

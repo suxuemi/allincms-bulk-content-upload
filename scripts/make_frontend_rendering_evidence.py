@@ -89,7 +89,7 @@ def main() -> int:
 
     text = json.dumps(evidence, ensure_ascii=False, indent=2) + "\n"
     if args.output:
-        Path(args.output).write_text(text, encoding="utf-8")
+        Path(args.output).expanduser().write_text(text, encoding="utf-8")
     else:
         print(text, end="")
     return 0

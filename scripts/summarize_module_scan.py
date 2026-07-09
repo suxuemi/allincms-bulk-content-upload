@@ -317,7 +317,7 @@ def main() -> int:
 
     text = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
     if args.output:
-        Path(args.output).write_text(text, encoding="utf-8")
+        Path(args.output).expanduser().write_text(text, encoding="utf-8")
         print(f"Wrote {args.output}")
     else:
         print(text, end="")

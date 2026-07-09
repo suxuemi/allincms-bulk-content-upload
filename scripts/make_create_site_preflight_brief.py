@@ -217,7 +217,7 @@ def main() -> int:
     parser.add_argument("--execution-plan", default="")
     parser.add_argument("--output", default="")
     parser.add_argument("--preflight-output", default="")
-    parser.add_argument("--create-authorization-output", default="/tmp/allincms-authorization-create-site.json")
+    parser.add_argument("--create-authorization-output", default="~/allincms-projects/allincms-authorization-create-site.json")
     parser.add_argument("--validate-only", default="")
     parser.add_argument("--validation-output", default="")
     parser.add_argument("--json", action="store_true")

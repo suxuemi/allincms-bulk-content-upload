@@ -15,6 +15,8 @@ from validate_source_site_package import load_json as load_package_json
 from validate_source_site_package import plain_text, validate_package
 from validate_source_site_package import content_goal_coverage
 
+from _common import default_run_root
+
 
 MAX_PREVIEW_CHARS = 160
 COUNTED_SITE_INFO_FIELDS = ("draftSeoTitle", "draftSeoDescription", "publicContact", "legalCompanyName", "logoPolicy")
@@ -541,9 +543,9 @@ def wiki_review(package: dict[str, Any]) -> dict[str, str]:
 
 
 def review_run_paths(review_packet_path: str | None) -> dict[str, str]:
-    review_ref = review_packet_path or "/tmp/allincms-run/source-package-review-packet.json"
-    review_path = Path(review_ref)
-    run_dir = review_path.parent if str(review_path.parent) not in ("", ".") else Path("/tmp/allincms-run")
+    review_ref = review_packet_path or str(default_run_root() / "source-package-review-packet.json")
+    review_path = Path(review_ref).expanduser()
+    run_dir = review_path.parent if str(review_path.parent) not in ("", ".") else default_run_root()
     return {
         "reviewPacket": review_ref,
         "confirmationOutput": str(run_dir / "confirmation-record.json"),
