@@ -194,6 +194,8 @@ For a first complete business site, include the official launch checklist fields
 
 ```text
 content: no template default copy, no Untitled Product, no Untitled Post, no test/测试 records, true contact details
+
+Enforce the no-template-residue rule with `check_template_residue.py` instead of eyeballing it: capture the old default-template fingerprints as a blacklist before conversion, capture the visible text of every live route after publish, and require zero residue hits. A converted-from-template site otherwise ships old brand / product / category chips / contact info scattered across footer, nav, modals, newsletter, and lower-page sections while the AI reports only "minor residue".
 minimum content: 2-3 main product categories, at least 2 representative products per main category, 3 basic posts/articles
 navigation: Home, Products, News/Blog, About Us, Contact Us, dropdowns, buttons, footer links, new page links, no unexpected 404s
 products/posts: product Detail Page points to /products, post/article detail points to /posts, detail pages open, body not empty, cover/media policy satisfied
