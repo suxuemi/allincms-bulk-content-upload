@@ -54,15 +54,15 @@ Before claiming completion, run the executable gate:
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_launch_acceptance.py \
   --require-created-site \
-  --run-evidence /tmp/allincms-run-evidence.json \
-  --module-coverage /tmp/allincms-module-coverage.json \
-  --upload-readiness /tmp/allincms-upload-readiness-report.json \
-  --batch-evidence /tmp/allincms-batch-upload-evidence.json \
-  --batch-validation /tmp/allincms-batch-upload-validation.json \
-  --forms-media-settings /tmp/allincms-forms-media-settings.json \
-  --final-frontend-audit /tmp/allincms-final-frontend-audit-stage-result.json \
-  --cleanup-evidence /tmp/allincms-probe-cleanup-evidence.json \
-  --round-closeout /tmp/allincms-round-closeout.json
+  --run-evidence ~/allincms-projects/allincms-run-evidence.json \
+  --module-coverage ~/allincms-projects/allincms-module-coverage.json \
+  --upload-readiness ~/allincms-projects/allincms-upload-readiness-report.json \
+  --batch-evidence ~/allincms-projects/allincms-batch-upload-evidence.json \
+  --batch-validation ~/allincms-projects/allincms-batch-upload-validation.json \
+  --forms-media-settings ~/allincms-projects/allincms-forms-media-settings.json \
+  --final-frontend-audit ~/allincms-projects/allincms-final-frontend-audit-stage-result.json \
+  --cleanup-evidence ~/allincms-projects/allincms-probe-cleanup-evidence.json \
+  --round-closeout ~/allincms-projects/allincms-round-closeout.json
 ```
 
 If only stage coverage, launch plan, browser execution plan, or rehearsal artifacts exist, this gate should fail. Use the failure report as the next live-evidence checklist instead of softening the launch claim.
@@ -74,25 +74,25 @@ For source-file driven runs, apply the launch gate result back into the local so
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_launch_acceptance.py \
   --require-created-site \
-  --run-evidence /tmp/allincms-run-evidence.json \
-  --module-coverage /tmp/allincms-module-coverage.json \
-  --upload-readiness /tmp/allincms-upload-readiness-report.json \
-  --batch-evidence /tmp/allincms-batch-upload-evidence.json \
-  --batch-validation /tmp/allincms-batch-upload-validation.json \
-  --forms-media-settings /tmp/allincms-forms-media-settings.json \
-  --final-frontend-audit /tmp/allincms-final-frontend-audit-stage-result.json \
-  --cleanup-evidence /tmp/allincms-probe-cleanup-evidence.json \
-  --round-closeout /tmp/allincms-round-closeout.json \
-  --package /tmp/allincms-run/source-site-package.json \
-  --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-  --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-  --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-  --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-  --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-  --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-  --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-  --sample-evidence /tmp/allincms-products-sample-evidence.json \
-  --output-dir /tmp/allincms-run/launch-acceptance-applied
+  --run-evidence ~/allincms-projects/allincms-run-evidence.json \
+  --module-coverage ~/allincms-projects/allincms-module-coverage.json \
+  --upload-readiness ~/allincms-projects/allincms-upload-readiness-report.json \
+  --batch-evidence ~/allincms-projects/allincms-batch-upload-evidence.json \
+  --batch-validation ~/allincms-projects/allincms-batch-upload-validation.json \
+  --forms-media-settings ~/allincms-projects/allincms-forms-media-settings.json \
+  --final-frontend-audit ~/allincms-projects/allincms-final-frontend-audit-stage-result.json \
+  --cleanup-evidence ~/allincms-projects/allincms-probe-cleanup-evidence.json \
+  --round-closeout ~/allincms-projects/allincms-round-closeout.json \
+  --package ~/allincms-projects/allincms-run/source-site-package.json \
+  --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+  --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+  --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+  --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+  --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+  --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+  --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+  --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+  --output-dir ~/allincms-projects/allincms-run/launch-acceptance-applied
 ```
 
 The apply helper is local-only. It writes `launch-acceptance-validation.json`, `source-execution-status.after-launch-acceptance.json`, and a summary. If the launch gate is invalid, the source execution dashboard must stay blocked at `launch_acceptance`; do not mark the source-file-to-site run complete from a failed validation report.

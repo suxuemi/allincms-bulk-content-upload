@@ -281,13 +281,13 @@ Do not mark them verified unless the user authorizes the side effect and the bro
 The refreshed evidence artifact for the read-only existing-site inspection was written outside the skill package:
 
 ```text
-/tmp/allincms-existing-site-readonly-2026-06-29-mysite01-refresh.json
+~/allincms-projects/allincms-existing-site-readonly-2026-06-29-mysite01-refresh.json
 ```
 
 It validates with:
 
 ```bash
-python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py /tmp/allincms-existing-site-readonly-2026-06-29-mysite01-refresh.json
+python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py ~/allincms-projects/allincms-existing-site-readonly-2026-06-29-mysite01-refresh.json
 ```
 
 The refreshed evidence includes a redacted `frontendRendering` block. Concrete slugs, headings, product names, article names, and issue snippets must stay out of the evidence.

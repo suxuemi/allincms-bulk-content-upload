@@ -75,8 +75,8 @@ def validate_packet_command_paths(
     ):
         if expected not in command:
             issues.append(f"{label} commandTemplate missing {name}: {expected}")
-    if "/tmp/allincms-full-rehearsal/" in command and "/tmp/allincms-full-rehearsal/" not in str(packet_path):
-        issues.append(f"{label} commandTemplate must not use the default /tmp/allincms-full-rehearsal path")
+    if "~/allincms-projects/allincms-full-rehearsal/" in command and "~/allincms-projects/allincms-full-rehearsal/" not in str(packet_path):
+        issues.append(f"{label} commandTemplate must not use the default ~/allincms-projects/allincms-full-rehearsal path")
 
 
 def require(condition: bool, issues: list[str], message: str) -> None:

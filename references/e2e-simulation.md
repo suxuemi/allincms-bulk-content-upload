@@ -123,13 +123,13 @@ If the turn is documentation-only, helper-script maintenance, planning, discussi
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_round_maintenance_summary.py \
-  --output /tmp/allincms-maintenance-summary.json \
+  --output ~/allincms-projects/allincms-maintenance-summary.json \
   --sedimentation updated \
   --note "Recorded reusable maintenance finding in operational-findings.md." \
   --changed-files "skills/allincms-bulk-content-upload/SKILL.md,skills/allincms-bulk-content-upload/references/operational-findings.md" \
   --round-issue "Maintenance closeout exposed a reusable command or documentation finding."
 python3 skills/allincms-bulk-content-upload/scripts/check_round_closeout.py \
-  --summary /tmp/allincms-maintenance-summary.json \
+  --summary ~/allincms-projects/allincms-maintenance-summary.json \
   --sedimentation updated \
   --note "Recorded reusable maintenance finding in operational-findings.md." \
   --changed-files "skills/allincms-bulk-content-upload/SKILL.md,skills/allincms-bulk-content-upload/references/operational-findings.md" \
@@ -161,12 +161,12 @@ For broader real-browser work, generate a staged execution plan after the full l
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_browser_execution_plan.py \
-  /tmp/allincms-full-rehearsal/full-e2e \
-  --handoff-json /tmp/allincms-full-rehearsal/next-capture-handoff/handoff.json \
-  --launch-plan-json /tmp/allincms-full-rehearsal/launch-plan.json \
-  --output /tmp/allincms-full-rehearsal/browser-execution-plan.json
+  ~/allincms-projects/allincms-full-rehearsal/full-e2e \
+  --handoff-json ~/allincms-projects/allincms-full-rehearsal/next-capture-handoff/handoff.json \
+  --launch-plan-json ~/allincms-projects/allincms-full-rehearsal/launch-plan.json \
+  --output ~/allincms-projects/allincms-full-rehearsal/browser-execution-plan.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_execution_plan.py \
-  /tmp/allincms-full-rehearsal/browser-execution-plan.json
+  ~/allincms-projects/allincms-full-rehearsal/browser-execution-plan.json
 ```
 
 The execution plan is a local-only runbook, not authorization. Use it to keep site creation, setup inspection, module request capture, theme/page/route launch, content probe, schema gate, batch upload, forms/media/settings, final audit, and cleanup as separate stages. A `requires_authorization` stage needs a fresh action-time user authorization and matching gate before any browser or JSON mutation.
@@ -175,10 +175,10 @@ After generating the execution plan, build a ledger before touching the browser:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_browser_execution_ledger.py \
-  /tmp/allincms-full-rehearsal/browser-execution-plan.json \
-  --output /tmp/allincms-full-rehearsal/browser-execution-ledger.json
+  ~/allincms-projects/allincms-full-rehearsal/browser-execution-plan.json \
+  --output ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_execution_ledger.py \
-  /tmp/allincms-full-rehearsal/browser-execution-ledger.json
+  ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.json
 ```
 
 The ledger is the stage-by-stage progress file. It should expose only the next safe `ready` stage while dependencies remain incomplete. After a real browser stage completes, record a redacted stage result outside the skill or in the user's chosen run directory, validate it against the packet, and apply it with `scripts/apply_browser_stage_result.py --result-json`. Do not rebuild the ledger from completed stage ids, and do not mark a later mutation stage ready just because the static plan lists it.
@@ -187,10 +187,10 @@ For the actual next browser step, build a single-stage packet from the ledger:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_browser_stage_packet.py \
-  /tmp/allincms-full-rehearsal/browser-execution-ledger.json \
-  --output /tmp/allincms-full-rehearsal/next-browser-stage-packet.json
+  ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.json \
+  --output ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_stage_packet.py \
-  /tmp/allincms-full-rehearsal/next-browser-stage-packet.json
+  ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json
 ```
 
 Use the packet, not the whole execution plan, as the browser operator's immediate instruction. It contains the one ready `stageId`, target template, allowed actions, required proof, stop condition, evidence-capture template, and ledger-update command. If the packet says `authorizationRequired: true`, treat its authorization text as a template only; wait for explicit action-time user approval before touching the browser.
@@ -201,18 +201,18 @@ After the stage finishes, validate and apply a redacted stage result instead of 
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_browser_stage_result.py \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet.json \
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json \
   --status completed \
-  --evidence-pointers /tmp/allincms-stage-proof/redacted-proof.json \
-  --output /tmp/allincms-stage-result.json
+  --evidence-pointers ~/allincms-projects/allincms-stage-proof/redacted-proof.json \
+  --output ~/allincms-projects/allincms-stage-result.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_stage_result.py \
-  /tmp/allincms-stage-result.json \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet.json
+  ~/allincms-projects/allincms-stage-result.json \
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json
 python3 skills/allincms-bulk-content-upload/scripts/apply_browser_stage_result.py \
-  --ledger /tmp/allincms-full-rehearsal/browser-execution-ledger.json \
-  --packet /tmp/allincms-full-rehearsal/next-browser-stage-packet.json \
-  --result-json /tmp/allincms-stage-result.json \
-  --output /tmp/allincms-full-rehearsal/browser-execution-ledger.updated.json
+  --ledger ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.json \
+  --packet ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json \
+  --result-json ~/allincms-projects/allincms-stage-result.json \
+  --output ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.updated.json
 ```
 
 The stage result artifact is always local evidence: keep `localOnly: true` and `remoteMutationsPerformed: false` because the helper is not itself mutating LAICMS. Use the packet's `remoteMutationExpectation` to decide the browser-stage effect:
@@ -245,9 +245,9 @@ If a partial stage has no ready successor, do not hand-edit the ledger or regene
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_browser_stage_packet.py \
-  /tmp/allincms-full-rehearsal/browser-execution-ledger.partial.json \
+  ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.partial.json \
   --stage-id theme_page_route_launch \
-  --output /tmp/allincms-full-rehearsal/next-browser-stage-packet.recovery.json
+  --output ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.recovery.json
 ```
 
 The recovery packet must say `recovery: true`, target the same `stageId`, and allow only the missing proof listed in the partial stage's blockers. Apply the later completed/partial/blocked result against that recovery packet. Only a completed recovery result may unlock the next dependent stage.
@@ -264,7 +264,7 @@ artifacts.browserStagePacketAfter<Stage>PartialRecovery
 
 This applies to non-module partial gates after theme/page launch, static frontend audit, content probe creation, save-request capture, sample publish/verify, manifest schema gate, batch upload, forms/media/settings, final frontend audit, and cleanup. Without a persisted recovery packet, the completion result cannot be independently checked against the exact same-stage recovery instructions.
 
-Evidence pointers must be inspectable references, not plain status text. Acceptable examples include `local://redacted-readonly-scan.json`, `/tmp/allincms-run/redacted-stage-result.json`, `./run-evidence/stage.json`, or a redacted `https://workspace.laicms.com/{realSiteKey}/...` URL. Reject placeholders such as `done`, `ok`, `verified`, or `see browser`; those are notes, not evidence locations.
+Evidence pointers must be inspectable references, not plain status text. Acceptable examples include `local://redacted-readonly-scan.json`, `~/allincms-projects/allincms-run/redacted-stage-result.json`, `./run-evidence/stage.json`, or a redacted `https://workspace.laicms.com/{realSiteKey}/...` URL. Reject placeholders such as `done`, `ok`, `verified`, or `see browser`; those are notes, not evidence locations.
 
 When a stage-result evidence pointer uses a workspace backend URL, redact the site segment as `{realSiteKey}`. Store `https://workspace.laicms.com/{realSiteKey}/products` or a local redacted scan path, not `https://workspace.laicms.com/abc123/products`. `/sites` is allowed because it is not tied to a single site key.
 
@@ -272,10 +272,10 @@ For `module_interface_capture`, also update the module/action coverage ledger:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/update_module_capture_coverage.py \
-  --plan /tmp/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
-  --result-json /tmp/allincms-module-capture-stage-result.json \
-  --existing-coverage /tmp/allincms-module-capture-coverage.json \
-  --output /tmp/allincms-module-capture-coverage.json
+  --plan ~/allincms-projects/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
+  --result-json ~/allincms-projects/allincms-module-capture-stage-result.json \
+  --existing-coverage ~/allincms-projects/allincms-module-capture-coverage.json \
+  --output ~/allincms-projects/allincms-module-capture-coverage.json
 ```
 
 The first capture can be useful proof, but it should leave `complete: false`, `jsonReplayReady: false`, and `nextUncapturedStageKey` populated unless every planned capture stage is already captured or explicitly marked not applicable.
@@ -284,12 +284,12 @@ When coverage remains incomplete, sync the coverage back to the browser executio
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/update_module_capture_coverage.py \
-  --plan /tmp/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
-  --result-json /tmp/allincms-module-capture-stage-result.json \
-  --existing-coverage /tmp/allincms-module-capture-coverage.json \
-  --sync-ledger /tmp/allincms-browser-execution-ledger.json \
-  --ledger-output /tmp/allincms-browser-execution-ledger.after-coverage-sync.json \
-  --output /tmp/allincms-module-capture-coverage-and-ledger.json
+  --plan ~/allincms-projects/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
+  --result-json ~/allincms-projects/allincms-module-capture-stage-result.json \
+  --existing-coverage ~/allincms-projects/allincms-module-capture-coverage.json \
+  --sync-ledger ~/allincms-projects/allincms-browser-execution-ledger.json \
+  --ledger-output ~/allincms-projects/allincms-browser-execution-ledger.after-coverage-sync.json \
+  --output ~/allincms-projects/allincms-module-capture-coverage-and-ledger.json
 ```
 
 The command outputs a wrapper with `coverage` and `ledger` when `--sync-ledger` is used; `--ledger-output` also writes the synced ledger as a standalone file. Use that synced ledger to build the next packet. The synced ledger should expose `module_interface_capture` again with an action such as `capture next module/action coverage stage: posts:create`. It must not expose theme/page launch, settings/media mutation, or batch upload until coverage is complete.
@@ -557,12 +557,12 @@ If a real read-only refresh proves that the operator should continue on an exist
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/branch_existing_site_ledger.py \
-  --ledger /tmp/allincms-full-rehearsal/browser-execution-ledger.after-refresh_readonly_site_evidence.json \
-  --existing-site-evidence /tmp/allincms-existing-site-readonly-evidence.json \
-  --output /tmp/allincms-full-rehearsal/browser-execution-ledger.existing-site-continuation.json
+  --ledger ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.after-refresh_readonly_site_evidence.json \
+  --existing-site-evidence ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --output ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.existing-site-continuation.json
 python3 skills/allincms-bulk-content-upload/scripts/build_browser_stage_packet.py \
-  /tmp/allincms-full-rehearsal/browser-execution-ledger.existing-site-continuation.json \
-  --output /tmp/allincms-full-rehearsal/next-browser-stage-packet-existing-site-setup.json
+  ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.existing-site-continuation.json \
+  --output ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-existing-site-setup.json
 ```
 
 This branch is local bookkeeping only. It skips `create_site_submit`, unlocks read-only `setup_pages_inspection`, and must not be reported as from-scratch site creation proof.
@@ -617,9 +617,9 @@ python3 skills/allincms-bulk-content-upload/scripts/make_create_preflight_eviden
   --site-key-evidence "old-site-a from backend url route https://workspace.laicms.com/old-site-a/dashboard;old-site-b from backend url route https://workspace.laicms.com/old-site-b/dashboard" \
   --observed-create-fields "button: 创建站点;dialog title: 创建站点;input name: name, placeholder: 站点名称;textarea name: description, placeholder: 站点简介;submit button: 创建;close button: Close" \
   --dialog-closed-verified \
-  --output /tmp/allincms-create-site-preflight.json
+  --output ~/allincms-projects/allincms-create-site-preflight.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py \
-  /tmp/allincms-create-site-preflight.json
+  ~/allincms-projects/allincms-create-site-preflight.json
 ```
 
 If `/sites` is verified empty, set `existingSiteKeysBeforeCreate` to `[]` by using `--no-existing-sites --empty-site-list-evidence "verified empty /sites list"`. Do not omit the field.
@@ -632,29 +632,29 @@ When frontend audit output already exists, prefer merging it through the evidenc
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_frontend_rendering_evidence.py \
-  /tmp/allincms-launch-audit-report.json \
-  --output /tmp/allincms-frontend-rendering-evidence.json
+  ~/allincms-projects/allincms-launch-audit-report.json \
+  --output ~/allincms-projects/allincms-frontend-rendering-evidence.json
 
 python3 skills/allincms-bulk-content-upload/scripts/make_existing_site_readonly_evidence.py \
-  --frontend-rendering-evidence /tmp/allincms-frontend-rendering-evidence.json \
-  --launch-readiness-evidence /tmp/allincms-launch-readiness-evidence.json \
+  --frontend-rendering-evidence ~/allincms-projects/allincms-frontend-rendering-evidence.json \
+  --launch-readiness-evidence ~/allincms-projects/allincms-launch-readiness-evidence.json \
   ...other required fields... \
-  --output /tmp/allincms-existing-site-readonly-evidence.json
+  --output ~/allincms-projects/allincms-existing-site-readonly-evidence.json
 ```
 
 When a browser refresh has produced a raw module scan JSON, redact it before storing, reusing, or converting it to run evidence:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/redact_browser_scan.py \
-  /tmp/allincms-browser-raw-scan.json \
-  --output /tmp/allincms-browser-readonly-scan.redacted.json
+  ~/allincms-projects/allincms-browser-raw-scan.json \
+  --output ~/allincms-projects/allincms-browser-readonly-scan.redacted.json
 
 python3 skills/allincms-bulk-content-upload/scripts/make_existing_site_evidence_from_scan.py \
-  /tmp/allincms-browser-readonly-scan.redacted.json \
+  ~/allincms-projects/allincms-browser-readonly-scan.redacted.json \
   --edit-fields "target content list/edit controls observed read-only" \
-  --frontend-rendering-evidence /tmp/allincms-frontend-rendering-evidence.json \
-  --launch-readiness-evidence /tmp/allincms-launch-readiness-evidence.json \
-  --output /tmp/allincms-existing-site-readonly-evidence.json
+  --frontend-rendering-evidence ~/allincms-projects/allincms-frontend-rendering-evidence.json \
+  --launch-readiness-evidence ~/allincms-projects/allincms-launch-readiness-evidence.json \
+  --output ~/allincms-projects/allincms-existing-site-readonly-evidence.json
 ```
 
 The redacted scan file must record `sites.existingSiteKeys` and the required backend module observations. `sites.createDialog` is optional for existing-site continuation; include it only when the browser actually opened and closed the create-site dialog in the current read-only pass. When present, `sites.createDialog.closedVerified: true` and name/description/submit/close controls are required. Each required module observation must include the actual observed backend URL, such as `https://workspace.laicms.com/{siteKey}/products`; the converter rejects missing URLs and wrong-site URLs. Do not use the converter to launder guessed routes or old create-dialog fields into fresh evidence. For create-site submit authorization, build a separate `create_preflight_verified` file; existing-site evidence is not a create-site mutation preflight.
@@ -673,7 +673,7 @@ Prefer generating this block instead of hand-writing JSON:
 python3 skills/allincms-bulk-content-upload/scripts/make_launch_readiness_evidence.py \
   --checked-paths "/,/home,/products,/solutions,/about-us,/contact-us" \
   --evidence "theme active, page rows published/enabled, routes bound, frontend DOM audited" \
-  --output /tmp/allincms-launch-readiness-evidence.json
+  --output ~/allincms-projects/allincms-launch-readiness-evidence.json
 ```
 
 ```json
@@ -707,7 +707,7 @@ Before a real browser submit, run the full local-only simulator to exercise site
 python3 skills/allincms-bulk-content-upload/scripts/run_full_rehearsal.py \
   --existing-site-keys old-site-a,old-site-b \
   --site-key-evidence "old-site-a from backend url route https://workspace.laicms.com/old-site-a/dashboard;old-site-b from backend url route https://workspace.laicms.com/old-site-b/dashboard" \
-  --output-dir /tmp/allincms-full-rehearsal
+  --output-dir ~/allincms-projects/allincms-full-rehearsal
 ```
 
 The rehearsal creates `full-e2e/01-site-creation/`, `full-e2e/02-probe-lifecycle/`, `full-e2e/03-module-interface-plan/`, `full-e2e/04-manifest-rehearsal/`, `full-e2e/full-e2e-summary.json`, `next-capture-handoff/handoff.json`, `launch-plan.json`, staged browser ledgers through static audit and content-probe creation, and `rehearsal-summary.json`. The module interface directory contains a simulated redacted module scan, module scan summary, and staged capture plan so the rehearsal covers the handoff from read-only inspection to one-action-at-a-time browser capture. The manifest rehearsal directory contains a neutral draft manifest, a simulated `source-input-gap-ledger.json`, generated source-input requirements with non-empty `operationGaps`, and a summary proving generic draft validation passes while the stricter upload schema gate fails as expected until a real save request provides `payloadTemplate`. The launch plan lists the proof gates needed before a site can be called launch-ready: real site creation proof, setup-page inspection, theme/route readiness, frontend static audit, module request capture, content schema capture, sample upload, batch upload, form/media/settings proof, final frontend audit, and cleanup. The rehearsal validates directory-level coherence across all four phases, then validates the generated handoff and launch plan. The handoff selects the next single stage, preferring the current `contentType` probe when no module/action is specified. For local-only simulation output, the handoff suppresses command fields by default and templates the target as `https://workspace.laicms.com/{realSiteKey}/...`; the simulated URL is kept only in `simulatedTarget` for audit. Use it as a rehearsal artifact, not as a real-site command or authorization source. This is the preferred local rehearsal before a real browser run because it catches interface drift across site creation, module planning, manifest schema gating, source gap-ledger merge, handoff, launch proof planning, static audit gating, and content probe phases.
@@ -731,11 +731,11 @@ Use `build_launch_plan.py` on an existing full E2E directory when only the launc
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_launch_plan.py \
-  /tmp/allincms-full-rehearsal/full-e2e \
-  --handoff-json /tmp/allincms-full-rehearsal/next-capture-handoff/handoff.json \
-  --output /tmp/allincms-full-rehearsal/launch-plan.json
+  ~/allincms-projects/allincms-full-rehearsal/full-e2e \
+  --handoff-json ~/allincms-projects/allincms-full-rehearsal/next-capture-handoff/handoff.json \
+  --output ~/allincms-projects/allincms-full-rehearsal/launch-plan.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_launch_plan.py \
-  /tmp/allincms-full-rehearsal/launch-plan.json
+  ~/allincms-projects/allincms-full-rehearsal/launch-plan.json
 ```
 
 The launch plan uses redacted route patterns such as `/products/{slug}` and template origins such as `https://{realSiteKey}.web.allincms.com`. Do not replace those with real slugs or business copy inside the skill.
@@ -744,7 +744,7 @@ After generating or editing a full rehearsal artifact, validate the top-level su
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_full_rehearsal.py \
-  /tmp/allincms-full-rehearsal/rehearsal-summary.json
+  ~/allincms-projects/allincms-full-rehearsal/rehearsal-summary.json
 ```
 
 To rehearse only the manifest normalization and schema gate:
@@ -753,9 +753,9 @@ To rehearse only the manifest normalization and schema gate:
 python3 skills/allincms-bulk-content-upload/scripts/simulate_manifest_rehearsal.py \
   --site-key simsite01 \
   --content-type products \
-  --output-dir /tmp/allincms-manifest-rehearsal
+  --output-dir ~/allincms-projects/allincms-manifest-rehearsal
 python3 skills/allincms-bulk-content-upload/scripts/validate_manifest_rehearsal.py \
-  /tmp/allincms-manifest-rehearsal/manifest-rehearsal-summary.json
+  ~/allincms-projects/allincms-manifest-rehearsal/manifest-rehearsal-summary.json
 ```
 
 The expected result is draft validation passing and `--require-schema-verified` failing. If the schema gate passes before request capture, treat that as a validator bug.
@@ -769,7 +769,7 @@ python3 skills/allincms-bulk-content-upload/scripts/simulate_site_creation_chain
   --existing-site-keys old-site-a,old-site-b \
   --site-key-evidence "old-site-a from backend url route https://workspace.laicms.com/old-site-a/dashboard;old-site-b from backend url route https://workspace.laicms.com/old-site-b/dashboard" \
   --include-simulated-static-launch \
-  --output-dir /tmp/allincms-site-creation-simulation
+  --output-dir ~/allincms-projects/allincms-site-creation-simulation
 ```
 
 The simulator writes five artifacts: `create-site-preflight.json`, `create-site-authorization.json`, `created-site-evidence.json`, `run-summary.json`, and `round-closeout.json`. With `--include-simulated-static-launch`, it also embeds simulated static `frontendRendering` and `launchReadiness` blocks. The summary must show `site_created_and_verified` and static launch proof as simulated proof while still surfacing upload gaps such as `request_capture_persisted_verified`, `sample_backend_frontend_verified`, and `cleanup_completed`.
@@ -780,9 +780,9 @@ After the created-site dry run, rehearse the content upload chain locally:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/simulate_probe_lifecycle.py \
-  --base /tmp/allincms-site-creation-simulation/created-site-evidence.json \
+  --base ~/allincms-projects/allincms-site-creation-simulation/created-site-evidence.json \
   --require-created-site \
-  --output-dir /tmp/allincms-probe-lifecycle-simulation
+  --output-dir ~/allincms-projects/allincms-probe-lifecycle-simulation
 ```
 
 This second simulator writes staged authorization and evidence files for probe creation, request capture, sample frontend/backend verification, and cleanup. Its final `run-summary.json` can become `complete: true` only because the proof is simulated; keep that distinction explicit before any real browser operation.
@@ -818,7 +818,7 @@ After those checks are observed on the new site, generate and validate the creat
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_created_site_evidence.py \
-  --preflight /tmp/allincms-create-site-preflight.json \
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json \
   --created-site-key new-site-key \
   --content-type products \
   --list-columns "媒体,名称,Slug,描述,排序,状态,分类,标签,创建时间" \
@@ -835,9 +835,9 @@ python3 skills/allincms-bulk-content-upload/scripts/make_created_site_evidence.p
   --module-routes "/new-site-key/dashboard,/new-site-key/products,/new-site-key/posts,/new-site-key/media,/new-site-key/themes,/new-site-key/routes,/new-site-key/forms,/new-site-key/site-info,/new-site-key/tracking,/new-site-key/domains" \
   --submitted-fields "name,description" \
   --authorization-source "current user instruction explicitly authorized creating new-site-key at https://workspace.laicms.com/sites" \
-  --output /tmp/allincms-created-site-evidence.json
+  --output ~/allincms-projects/allincms-created-site-evidence.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py \
-  /tmp/allincms-created-site-evidence.json
+  ~/allincms-projects/allincms-created-site-evidence.json
 ```
 
 If `mode` is `batch_upload` or `uploadInScope` is true, the evidence must include request capture and sample verification. `mode: "mutating_probe"` may be a staged state before save or before publish; use the pre-mutation gate for the next stage and do not claim completion until request capture, sample verification, and cleanup are all present:
@@ -880,7 +880,7 @@ After each separately authorized probe stage, prefer merging the observed proof 
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/merge_probe_evidence.py \
-  --base /tmp/allincms-current-run-evidence.json \
+  --base ~/allincms-projects/allincms-current-run-evidence.json \
   --request-capture \
   --url "https://workspace.laicms.com/{siteKey}/products/{redacted-id}/update" \
   --method POST \
@@ -890,7 +890,7 @@ python3 skills/allincms-bulk-content-upload/scripts/merge_probe_evidence.py \
   --idFields "siteId, productId" \
   --mode update \
   --publishBehavior "publish separate" \
-  --output /tmp/allincms-current-run-evidence.json
+  --output ~/allincms-projects/allincms-current-run-evidence.json
 ```
 
 For cleanup, pass redacted candidates as `contentType|titlePattern|backendUrl|reason` and validate the merged evidence before claiming cleanup is complete.

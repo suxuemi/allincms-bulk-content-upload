@@ -48,8 +48,8 @@ For the first create-probe click in a content module, validate the gate before t
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action create_product_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-create-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-create-product-probe.json
 ```
 
 Passing this gate only authorizes opening/creating the probe draft for that exact module. Saving the probe, publishing it, replaying its request, or cleaning it up each need their own authorization and evidence.
@@ -59,8 +59,8 @@ Before saving the probe to capture the real request, generate a separate `save_p
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action save_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-save-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-save-product-probe.json
 ```
 
 The save authorization must name the exact backend edit URL, content type, probe title, and capture/request/persistence intent. A prior `create_product_probe` authorization is not permission to save.
@@ -69,18 +69,18 @@ After a create-probe stage has produced a draft edit URL, build a local save run
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_probe_save_handoff.py \
-  --create-evidence /tmp/allincms-create-probe-evidence.json \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
+  --create-evidence ~/allincms-projects/allincms-create-probe-evidence.json \
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
   --edit-url https://workspace.laicms.com/{siteKey}/products/{productId}/update \
-  --authorization-output /tmp/allincms-authorization-save-product-probe.json \
-  --output /tmp/allincms-save-probe-handoff.json
+  --authorization-output ~/allincms-projects/allincms-authorization-save-product-probe.json \
+  --output ~/allincms-projects/allincms-save-probe-handoff.json
 python3 skills/allincms-bulk-content-upload/scripts/build_probe_save_runbook.py \
-  /tmp/allincms-save-probe-handoff.json \
-  --output /tmp/allincms-save-probe-runbook.json
+  ~/allincms-projects/allincms-save-probe-handoff.json \
+  --output ~/allincms-projects/allincms-save-probe-runbook.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_probe_save_runbook.py \
-  /tmp/allincms-save-probe-runbook.json \
+  ~/allincms-projects/allincms-save-probe-runbook.json \
   --expect-missing-authorization \
-  --output /tmp/allincms-save-probe-runbook-validation.json
+  --output ~/allincms-projects/allincms-save-probe-runbook-validation.json
 ```
 
 The runbook is still local preparation. Its `browserStepsAfterGate` must not be executed until the `save_probe` authorization record exists and `check_pre_mutation_gate.py --action save_probe` passes. Treat the runbook as the operator checklist for field edits, network capture, persistence verification, and forbidden actions after the gate passes.
@@ -96,7 +96,7 @@ Do not put `saving the probe` in `forbiddenActions`; the save is the exact gated
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_probe_save_runbook.py \
-  /tmp/allincms-save-probe-runbook.json \
+  ~/allincms-projects/allincms-save-probe-runbook.json \
   --fail-on-blocked
 ```
 
@@ -119,8 +119,8 @@ If publish is needed for frontend detail verification, generate a separate `publ
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action publish_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-publish-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-publish-product-probe.json
 ```
 
 The publish authorization must name the exact backend edit URL, content type, probe title, publish intent, and frontend verification expectation. A `save_probe` authorization is not permission to publish.
@@ -129,9 +129,9 @@ After request capture is merged and `summarize_run_status.py` emits `authorize_p
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_probe_publish_runbook.py \
-  --run-evidence /tmp/allincms-run-evidence-after-request-capture.json \
-  --authorization-output /tmp/allincms-publish-probe-authorization.json \
-  --output /tmp/allincms-publish-probe-runbook.json
+  --run-evidence ~/allincms-projects/allincms-run-evidence-after-request-capture.json \
+  --authorization-output ~/allincms-projects/allincms-publish-probe-authorization.json \
+  --output ~/allincms-projects/allincms-publish-probe-runbook.json
 ```
 
 The runbook is local preparation only. It must retain the authorization placeholder and `browserStepsExecutable: false` until the `publish_probe` authorization record exists and the publish gate passes. The only gated mutation is one `发布` click for that probe; cleanup, upload, batch, replay, or repeated publish clicks remain forbidden.
@@ -140,17 +140,17 @@ After the publish-probe browser run, validate and merge sample proof:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_probe_publish_sample_evidence.py \
-  /tmp/allincms-publish-sample-evidence.json \
-  --base-run-evidence /tmp/allincms-run-evidence-after-request-capture.json \
-  --merge-args-output /tmp/allincms-publish-sample-merge-args.json \
-  --output /tmp/allincms-publish-sample-validation.json
+  ~/allincms-projects/allincms-publish-sample-evidence.json \
+  --base-run-evidence ~/allincms-projects/allincms-run-evidence-after-request-capture.json \
+  --merge-args-output ~/allincms-projects/allincms-publish-sample-merge-args.json \
+  --output ~/allincms-projects/allincms-publish-sample-validation.json
 python3 skills/allincms-bulk-content-upload/scripts/merge_probe_evidence.py \
-  --base /tmp/allincms-run-evidence-after-request-capture.json \
-  --publish-sample-evidence /tmp/allincms-publish-sample-evidence.json \
-  --output /tmp/allincms-run-evidence-after-publish-sample.json
+  --base ~/allincms-projects/allincms-run-evidence-after-request-capture.json \
+  --publish-sample-evidence ~/allincms-projects/allincms-publish-sample-evidence.json \
+  --output ~/allincms-projects/allincms-run-evidence-after-publish-sample.json
 python3 skills/allincms-bulk-content-upload/scripts/summarize_run_status.py \
-  /tmp/allincms-run-evidence-after-publish-sample.json \
-  --output /tmp/allincms-run-summary-after-publish-sample.json
+  ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --output ~/allincms-projects/allincms-run-summary-after-publish-sample.json
 ```
 
 The publish sample evidence must prove `publishedOnce`, `publishRequestCaptured`, backend status, frontend HTTP/detail render, title/name, body, cover/media state or an explicit absence note, and no raw Markdown residue. It must be bound to the same base run evidence before merge.
@@ -189,17 +189,17 @@ After a save-probe browser run, write redacted capture evidence as `allincms_pro
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_probe_save_capture_evidence.py \
-  /tmp/allincms-save-capture-evidence.json \
-  --base-run-evidence /tmp/allincms-run-evidence.json \
-  --merge-args-output /tmp/allincms-save-capture-merge-args.json \
-  --output /tmp/allincms-save-capture-validation.json
+  ~/allincms-projects/allincms-save-capture-evidence.json \
+  --base-run-evidence ~/allincms-projects/allincms-run-evidence.json \
+  --merge-args-output ~/allincms-projects/allincms-save-capture-merge-args.json \
+  --output ~/allincms-projects/allincms-save-capture-validation.json
 python3 skills/allincms-bulk-content-upload/scripts/merge_probe_evidence.py \
-  --base /tmp/allincms-run-evidence.json \
-  --save-capture-evidence /tmp/allincms-save-capture-evidence.json \
-  --output /tmp/allincms-run-evidence-after-request-capture.json
+  --base ~/allincms-projects/allincms-run-evidence.json \
+  --save-capture-evidence ~/allincms-projects/allincms-save-capture-evidence.json \
+  --output ~/allincms-projects/allincms-run-evidence-after-request-capture.json
 python3 skills/allincms-bulk-content-upload/scripts/summarize_run_status.py \
-  /tmp/allincms-run-evidence-after-request-capture.json \
-  --output /tmp/allincms-run-summary-after-request-capture.json
+  ~/allincms-projects/allincms-run-evidence-after-request-capture.json \
+  --output ~/allincms-projects/allincms-run-summary-after-request-capture.json
 ```
 
 The evidence must use header names only. Never store raw cookies, authorization header values, raw `next-action` values, `next-router-state-tree` blobs, account emails, or raw IDs. The validator requires `savedOnce: true`, `published: false`, `preMutationGate: passed`, `backendPersisted: true`, `stopConditionMet: true`, a concrete edit `target`, a current-site POST `requestCapture.url`, verified `fieldMapping`, and a redacted `payloadTemplate`. Use `--base-run-evidence` so the capture is bound to the same `siteKey` and `contentType` before merge, not only during merge.
@@ -267,7 +267,7 @@ After those facts are captured, encode them as a redacted per-action contract an
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_action_replay_contract.py \
-  /tmp/allincms-action-replay-contract.json
+  ~/allincms-projects/allincms-action-replay-contract.json
 ```
 
 The contract must use header names only, not values. It must never store raw cookies, authorization headers, raw `next-action` IDs, router state blobs, account emails, raw payloads, or object IDs as values. A passing contract makes only that exact action replay-ready locally; it is not user authorization and it is not proof that adjacent actions or batch upload are safe.

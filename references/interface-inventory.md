@@ -43,8 +43,8 @@ After collecting a redacted module scan JSON, summarize it before storing eviden
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/summarize_module_scan.py \
-  /tmp/allincms-module-scan.json \
-  --output /tmp/allincms-module-scan-summary.json
+  ~/allincms-projects/allincms-module-scan.json \
+  --output ~/allincms-projects/allincms-module-scan-summary.json
 ```
 
 The scan file can be either a request-oriented list of module records or a redacted browser-scan object with a `modules` map. If the scan object contains only DOM evidence (`url`, headings, table headers, inputs, buttons) and no network request list, the summary must stay at `read_only_only` with `visible_control_only` inferred actions. That means the operator has proved module visibility and possible controls, not JSON/Server Action replay readiness.
@@ -86,7 +86,7 @@ Once a single action has all of that proof, validate a redacted action replay co
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_action_replay_contract.py \
-  /tmp/allincms-action-replay-contract.json
+  ~/allincms-projects/allincms-action-replay-contract.json
 ```
 
 This validator is intentionally action-level. A valid `save_design` contract does not validate `publish_design`; a valid `create_route` contract does not validate route binding; a valid product `save_probe` contract does not validate posts or batch upload.
@@ -95,10 +95,10 @@ If all captured stages in a module coverage file have matching valid contracts, 
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_action_replay_contracts.py \
-  --coverage /tmp/allincms-module-capture-coverage.json \
-  --contract /tmp/allincms-action-a-contract.json \
-  --contract /tmp/allincms-action-b-contract.json \
-  --output /tmp/allincms-module-capture-coverage-replay-ready.json
+  --coverage ~/allincms-projects/allincms-module-capture-coverage.json \
+  --contract ~/allincms-projects/allincms-action-a-contract.json \
+  --contract ~/allincms-projects/allincms-action-b-contract.json \
+  --output ~/allincms-projects/allincms-module-capture-coverage-replay-ready.json
 ```
 
 The aggregator rejects missing, duplicate, invalid, or wrong-stage contracts. A replay-ready coverage file is still a technical-readiness artifact only; user authorization and mutation gates remain separate.
@@ -107,9 +107,9 @@ To turn that checklist into staged browser work, generate a capture plan:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/plan_module_capture.py \
-  /tmp/allincms-module-scan-summary.json \
+  ~/allincms-projects/allincms-module-scan-summary.json \
   --site-key safe-site-key \
-  --output /tmp/allincms-module-capture-plan.json
+  --output ~/allincms-projects/allincms-module-capture-plan.json
 ```
 
 The plan groups actions by authorization boundary, target URL, stop condition, and required proof. It is a sequencing aid only. Execute at most one stage per explicit user authorization; after each stage, re-run the relevant evidence and closeout checks before continuing.
@@ -118,12 +118,12 @@ For one selected stage, prepare an authorization package:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_capture_authorization.py \
-  /tmp/allincms-module-capture-plan.json \
+  ~/allincms-projects/allincms-module-capture-plan.json \
   --module products \
   --action create \
-  --preflight /tmp/allincms-created-site-evidence.json \
-  --authorization-output /tmp/allincms-auth-products-create.json \
-  --output /tmp/allincms-auth-products-create-package.json
+  --preflight ~/allincms-projects/allincms-created-site-evidence.json \
+  --authorization-output ~/allincms-projects/allincms-auth-products-create.json \
+  --output ~/allincms-projects/allincms-auth-products-create-package.json
 ```
 
 The package contains suggested user-facing authorization text plus local commands to generate an authorization record and run the pre-mutation gate when supported. The suggested text is not itself authorization unless the user explicitly sends it as the current instruction. Do not run the generated mutation gate against stale evidence, and do not use the package to combine multiple stages.
@@ -140,8 +140,8 @@ Validate the package before using it:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_capture_authorization_package.py \
-  /tmp/allincms-auth-products-create-package.json \
-  --plan-json /tmp/allincms-module-capture-plan.json
+  ~/allincms-projects/allincms-auth-products-create-package.json \
+  --plan-json ~/allincms-projects/allincms-module-capture-plan.json
 ```
 
 Passing validation means the package aligns with one capture-plan stage, retains the current-user authorization placeholder, and any emitted commands target a concrete backend URL. It still does not create an authorization record and does not permit a browser mutation. If the package is command-suppressed, templated, simulated, or already contains suggested authorization text in a command, rebuild it from current real-site evidence before asking for action-time authorization.

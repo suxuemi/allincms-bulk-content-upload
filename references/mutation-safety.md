@@ -125,7 +125,7 @@ python3 skills/allincms-bulk-content-upload/scripts/make_authorization_record.py
   --verification-plan "verify site card, backend dashboard, frontend base URL, and module routes" \
   --cleanup-plan "no automatic deletion; stop before content upload" \
   --authorization-source "current user explicitly authorizes creating a site at https://workspace.laicms.com/sites with name and description" \
-  --output /tmp/allincms-authorization-create-site.json
+  --output ~/allincms-projects/allincms-authorization-create-site.json
 ```
 
 The authorization helper supports granular theme launch actions such as `create_theme_page`, `save_design`, `publish_design`, `set_homepage`, `enable_theme_page`, and `bind_route`. It also supports content-type-specific probe creation actions such as `create_post_probe`, `create_product_probe`, and `create_form_probe`, plus `save_probe`, `publish_probe`, and `cleanup_probe` for the separate save/capture, sample publish, and cleanup steps. For existing non-probe launch/demo content, use `save_product`, `publish_product`, `save_post`, or `publish_post`. Use those exact actions instead of overloading generic `publish`, `create_draft`, `save`, or `delete_or_cleanup` when creating a theme page, editing page design, setting homepage, enabling a theme page, changing route bindings, creating a probe for a specific module, saving a probe to capture a request, publishing a probe for frontend verification, cleaning a probe, or updating one existing product/post.
@@ -193,9 +193,9 @@ Browser-stage authorization packages are preparation artifacts, not authorizatio
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_stage_authorization_package.py \
-  /tmp/allincms-browser-stage-authorization-package.json \
-  --packet-json /tmp/allincms-next-browser-stage-packet.json \
-  --preflight /tmp/allincms-preflight-or-site-evidence.json
+  ~/allincms-projects/allincms-browser-stage-authorization-package.json \
+  --packet-json ~/allincms-projects/allincms-next-browser-stage-packet.json \
+  --preflight ~/allincms-projects/allincms-preflight-or-site-evidence.json
 ```
 
 The validator must keep the warning that the package is not user authorization and must keep `<paste current user authorization text here>` inside `authorizationRecordCommand`. If either is missing, stop and regenerate or fix the package; do not replace the placeholder with old chat text or helper-generated suggested wording.
@@ -215,8 +215,8 @@ Before clicking a content-type create button for a probe, run the final local ga
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action create_product_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-create-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-create-product-probe.json
 ```
 
 The gate must verify the same site key, module route, content type, target URL, `Codex Probe - Delete Me` target identifier, non-empty probe fields, and recent timestamps. Use `create_post_probe` or `create_form_probe` for those modules; do not use a generic `create_draft`.
@@ -226,8 +226,8 @@ Before saving a probe, run the save gate:
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action save_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-save-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-save-product-probe.json
 ```
 
 This gate must verify the target edit URL belongs under the same `{siteKey}/{contentType}` route, the target identifier includes `Codex Probe - Delete Me`, and `fieldsOrFiles` includes `requestCapture`, `payloadShape`, and `persistedVerified`.
@@ -237,8 +237,8 @@ Before publishing a probe, run the publish gate:
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action publish_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-publish-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-publish-product-probe.json
 ```
 
 This gate must verify the target edit URL belongs under the same `{siteKey}/{contentType}` route, the edit field evidence includes a publish control, the target identifier includes `Codex Probe - Delete Me`, and `fieldsOrFiles` includes `publishStatus` and `frontendVerified`.
@@ -248,8 +248,8 @@ Before mutating theme, route, form, or site settings state, run the site-action 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action save_design \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-save-design.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-save-design.json
 ```
 
 Examples of required `fieldsOrFiles`:
@@ -330,8 +330,8 @@ Before cleaning a probe, run the cleanup gate:
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action cleanup_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-cleanup-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-cleanup-product-probe.json
 ```
 
 This gate must verify the target edit/list URL belongs under the same `{siteKey}/{contentType}` route, the target identifier includes `Codex Probe - Delete Me`, and `fieldsOrFiles` includes `cleanedCandidates`, `backendVerified`, and `frontendVerified`.

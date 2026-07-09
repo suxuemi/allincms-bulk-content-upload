@@ -67,7 +67,7 @@ Read only the references needed for the current task:
 
 ## Workflow
 
-**Run-folder convention (stated once; the command blocks below reuse it).** All artifacts go in one run folder OUTSIDE the skill package, e.g. `/tmp/allincms-run/` (subfolders like `confirmed-artifacts/`, `refined-source-apply/`, `created-site-schema-capture/`). The `/tmp/allincms-run/...` paths in the examples below are that convention filled in — substitute your own run folder; each command shows its distinctive flags and the paths just follow this layout.
+**Run-folder convention (stated once; the command blocks below reuse it).** All artifacts go in one run folder OUTSIDE the skill package that **PERSISTS across sessions** — the source wiki, content package, confirmation, and run state must survive to resume/reuse/audit, so a reboot-cleared temp dir is the wrong place. The default is `~/allincms-projects/` (cross-platform: helpers `expanduser()` the `~`, so it resolves on Windows too; override with the `ALLINCMS_RUN_HOME` env var, or pass `--output-dir` / `--output` per command). Subfolders like `confirmed-artifacts/`, `refined-source-apply/`, `created-site-schema-capture/` sit under it. The `~/allincms-projects/...` paths in the examples below are that convention filled in — substitute your own run folder; each command shows its distinctive flags and the paths just follow this layout. Only genuinely throwaway one-off evidence may use a temp dir; anything you need to resume from belongs in the persistent run folder.
 
 **Authorization invariant (stated once; do not re-derive per step).** Every prepare/apply/build/validate helper below is local-only, non-authorizing scaffolding — see Invariants INV-2 (authorization never carries to the next action/type/site) and INV-3 (a read-only load/preflight is recovery, not authorization) in `references/operational-findings.md`. Each remote mutation (create site, save, publish, upload, delete, batch) still needs its own action-time authorization + `check_pre_mutation_gate.py`; the steps below assume this everywhere and only call it out where a specific gate name or ordering matters.
 
@@ -96,7 +96,7 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/record_source_input_gap.py \
-     --output /tmp/allincms-source-input-gap-ledger.json \
+     --output ~/allincms-projects/allincms-source-input-gap-ledger.json \
      --site-key current-site-key \
      --content-type products \
      --field "specifications" \
@@ -106,10 +106,10 @@ Read only the references needed for the current task:
      --generation-rule "Generate structured spec rows only after current-site spec row schema is captured." \
      --current-evidence blocked \
      --decision-needed needs-schema-capture \
-     --evidence-pointer /tmp/current-run-redacted-evidence.json
+     --evidence-pointer ~/allincms-projects/current-run-redacted-evidence.json
    ```
 
-   Keep the ledger in `/tmp` or another run-evidence path. Do not write ledgers into `skills/allincms-bulk-content-upload/`, and do not store business copy, source text, personal data, raw IDs, cookies, or request headers in the ledger.
+   Keep the ledger in `~/allincms-projects` or another run-evidence path. Do not write ledgers into `skills/allincms-bulk-content-upload/`, and do not store business copy, source text, personal data, raw IDs, cookies, or request headers in the ledger.
    Append rows to the same ledger serially. Parallel read-only agents may discover field gaps independently, but the controller must either write one row at a time with `record_source_input_gap.py` or collect per-agent ledgers and merge them later. Do not run multiple `record_source_input_gap.py` writers against the same JSON file concurrently.
    Each discovered field must answer four questions for later PDF/catalog/brief generation: who supplies it (`source-derived`, `user-confirmed`, or both), how to generate it, what current evidence proves the backend shape, and what blocks upload if it is missing. If any answer is unknown, record the field as blocked or needing user confirmation instead of leaving it implicit.
    Separate source-derived fields from user-confirmed fields. Product names, summaries, body copy, specs, applications, image alt text, menu labels, and draft page copy can usually be derived from PDFs, catalogs, websites, spreadsheets, or briefs after schema capture. Domains, notification emails, tracking IDs/snippets, legal company names, public contact channels, route visibility, final sitemap, CTA destinations, pricing, inventory, and unsupported certification claims require user confirmation unless the source explicitly provides them and the user has accepted that source as authoritative.
@@ -118,9 +118,9 @@ Read only the references needed for the current task:
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/make_resolved_source_input_gaps.py \
      --site-key current-site-key \
-     --gap-ledger /tmp/allincms-source-input-gap-ledger.json \
-     --resolved-gap "fieldLabel=posts.post-detail-route|proof=/tmp/redacted-post-detail-recheck.json|note=Bounded frontend recheck rendered the new post detail route; body and cover remain separate unresolved fields." \
-     --output /tmp/allincms-resolved-source-input-gaps.json
+     --gap-ledger ~/allincms-projects/allincms-source-input-gap-ledger.json \
+     --resolved-gap "fieldLabel=posts.post-detail-route|proof=~/allincms-projects/redacted-post-detail-recheck.json|note=Bounded frontend recheck rendered the new post detail route; body and cover remain separate unresolved fields." \
+     --output ~/allincms-projects/allincms-resolved-source-input-gaps.json
    ```
 
    Before feeding a ledger into source extraction, validate it:
@@ -128,7 +128,7 @@ Read only the references needed for the current task:
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/record_source_input_gap.py \
      --validate-only \
-     --output /tmp/allincms-source-input-gap-ledger.json \
+     --output ~/allincms-projects/allincms-source-input-gap-ledger.json \
      --site-key current-site-key
    ```
 
@@ -138,11 +138,11 @@ Read only the references needed for the current task:
    python3 skills/allincms-bulk-content-upload/scripts/make_source_input_requirements.py \
      --site-key current-site-key \
      --content-types products,posts,forms,media,themes/pages,site-info,routes,domains,tracking,navigation \
-     --gap-ledger /tmp/allincms-source-input-gap-ledger.json \
-     --resolved-gap-evidence /tmp/allincms-resolved-source-input-gaps.json \
-     --save-capture-evidence /tmp/allincms-products-save-capture-evidence.json \
-     --media-evidence /tmp/allincms-media-evidence.json \
-     --output /tmp/allincms-source-input-requirements.json
+     --gap-ledger ~/allincms-projects/allincms-source-input-gap-ledger.json \
+     --resolved-gap-evidence ~/allincms-projects/allincms-resolved-source-input-gaps.json \
+     --save-capture-evidence ~/allincms-projects/allincms-products-save-capture-evidence.json \
+     --media-evidence ~/allincms-projects/allincms-media-evidence.json \
+     --output ~/allincms-projects/allincms-source-input-requirements.json
    ```
 
    Keep the generated file as run evidence. Do not copy business copy, source text, source documents, private communication details, or concrete media URLs into the skill package.
@@ -153,9 +153,9 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_source_site_package.py \
-     /tmp/allincms-run/source-files \
+     ~/allincms-projects/allincms-run/source-files \
      --recursive \
-     --output-dir /tmp/allincms-run \
+     --output-dir ~/allincms-projects/allincms-run \
      --site-name "Draft site name" \
      --site-description "Draft source-backed positioning" \
      --industry "target industry"
@@ -165,9 +165,9 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/run_source_file_rehearsal.py \
-     /tmp/allincms-run/source-files \
+     ~/allincms-projects/allincms-run/source-files \
      --recursive \
-     --output-dir /tmp/allincms-run/source-rehearsal \
+     --output-dir ~/allincms-projects/allincms-run/source-rehearsal \
      --site-name "Draft site name" \
      --site-description "Draft source-backed positioning" \
      --industry "target industry" \
@@ -178,10 +178,10 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_refined_source_wiki.py \
-     --source-wiki /tmp/allincms-run/source-wiki.refined.json \
-     --inventory /tmp/allincms-run/source-index.json \
-     --requirements /tmp/allincms-run/source-input-requirements.json \
-     --output-dir /tmp/allincms-run/refined-source-apply
+     --source-wiki ~/allincms-projects/allincms-run/source-wiki.refined.json \
+     --inventory ~/allincms-projects/allincms-run/source-index.json \
+     --requirements ~/allincms-projects/allincms-run/source-input-requirements.json \
+     --output-dir ~/allincms-projects/allincms-run/refined-source-apply
    ```
 
    Use the generated `source-package-review-packet.refined.json` only if `reviewReady=true`. Do not ask for confirmation or create a site from a placeholder package. A refined wiki is bound to the current refinement brief's `outputRefinedSourceWiki`; if you change `--output-dir`, regenerate the refined wiki or use `--auto-draft-refined-source-wiki` again instead of reusing an older refined file from another run folder.
@@ -190,33 +190,33 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/build_source_inventory.py \
-     /tmp/allincms-run/source-files \
+     ~/allincms-projects/allincms-run/source-files \
      --recursive \
-     --output /tmp/allincms-run/source-index.json
+     --output ~/allincms-projects/allincms-run/source-index.json
    python3 skills/allincms-bulk-content-upload/scripts/extract_source_materials.py \
-     --inventory /tmp/allincms-run/source-index.json \
-     --output-dir /tmp/allincms-run/raw-extraction \
+     --inventory ~/allincms-projects/allincms-run/source-index.json \
+     --output-dir ~/allincms-projects/allincms-run/raw-extraction \
      --site-name "draft site name for extraction summary"
    python3 skills/allincms-bulk-content-upload/scripts/build_source_wiki.py \
-     --inventory /tmp/allincms-run/source-index.json \
-     --extraction-summary /tmp/allincms-run/raw-extraction/summary.json \
-     --output /tmp/allincms-run/source-wiki.json
+     --inventory ~/allincms-projects/allincms-run/source-index.json \
+     --extraction-summary ~/allincms-projects/allincms-run/raw-extraction/summary.json \
+     --output ~/allincms-projects/allincms-run/source-wiki.json
    python3 skills/allincms-bulk-content-upload/scripts/validate_source_wiki.py \
-     --inventory /tmp/allincms-run/source-index.json \
-     /tmp/allincms-run/source-wiki.json
+     --inventory ~/allincms-projects/allincms-run/source-index.json \
+     ~/allincms-projects/allincms-run/source-wiki.json
    ```
 
    Then build and validate the local source-site package before making upload manifests:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/build_source_site_package.py \
-     --source-wiki /tmp/allincms-run/source-wiki.json \
-     --requirements /tmp/allincms-run/source-input-requirements.json \
-     --output /tmp/allincms-run/source-site-package.json
+     --source-wiki ~/allincms-projects/allincms-run/source-wiki.json \
+     --requirements ~/allincms-projects/allincms-run/source-input-requirements.json \
+     --output ~/allincms-projects/allincms-run/source-site-package.json
    python3 skills/allincms-bulk-content-upload/scripts/validate_source_site_package.py \
      --require-complete-package \
      --require-publication-ready \
-     /tmp/allincms-run/source-site-package.json
+     ~/allincms-projects/allincms-run/source-site-package.json
    ```
 
    Use structural validation without `--require-publication-ready` only for local rehearsals or early extraction diagnostics. Before asking the user to confirm a package, the publication-ready gate must pass: no `Draft Product` / `Draft Article` placeholders, no `requires review` / `requires source extraction` wording, no unresolved replacement notes, and no page/product/post copy that is too thin to publish. The package may contain publish-ready draft copy, but it must still keep `confirmationGate.required: true`, remote actions blocked, and product/post manifests at `schemaVerified: false` until current-site request capture. Do not upload from the source package directly.
@@ -224,11 +224,11 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/make_source_package_review_packet.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --output /tmp/allincms-run/source-package-review-packet.json
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --output ~/allincms-projects/allincms-run/source-package-review-packet.json
    python3 skills/allincms-bulk-content-upload/scripts/validate_source_package_review_packet.py \
-     /tmp/allincms-run/source-package-review-packet.json \
-     --package /tmp/allincms-run/source-site-package.json
+     ~/allincms-projects/allincms-run/source-package-review-packet.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json
    ```
 
    Show or summarize this packet for the user instead of pasting long source copy. It is local review evidence only; it does not authorize creating a site, saving, uploading, publishing, routing, media, domains, or tracking.
@@ -236,37 +236,37 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_confirmed_site_execution.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --review-packet /tmp/allincms-run/source-package-review-packet.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --review-packet ~/allincms-projects/allincms-run/source-package-review-packet.json \
      --user-confirmation-text "paste current user confirmation text here" \
-     --output-dir /tmp/allincms-run/execution \
+     --output-dir ~/allincms-projects/allincms-run/execution \
      --target-mode new_site
    ```
 
-   This writes a confirmation record, confirmed execution plan, exported draft artifacts, and source execution status. If `--create-preflight /tmp/allincms-create-site-preflight.json` is also provided, it prepares a create-site handoff with authorization placeholders. It still does not create a site, save, upload, publish, route, or bind domains; action-specific mutation gates remain required.
+   This writes a confirmation record, confirmed execution plan, exported draft artifacts, and source execution status. If `--create-preflight ~/allincms-projects/allincms-create-site-preflight.json` is also provided, it prepares a create-site handoff with authorization placeholders. It still does not create a site, save, upload, publish, route, or bind domains; action-specific mutation gates remain required.
 
    Use the individual commands below when debugging or when you need to rebuild one artifact:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/make_source_package_confirmation.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --review-packet /tmp/allincms-run/source-package-review-packet.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --review-packet ~/allincms-projects/allincms-run/source-package-review-packet.json \
      --user-confirmation-text "paste current user confirmation text here" \
-     --output /tmp/allincms-run/confirmation-record.json
+     --output ~/allincms-projects/allincms-run/confirmation-record.json
    python3 skills/allincms-bulk-content-upload/scripts/validate_source_package_confirmation.py \
-     /tmp/allincms-run/confirmation-record.json \
-     --package /tmp/allincms-run/source-site-package.json \
-     --review-packet /tmp/allincms-run/source-package-review-packet.json
+     ~/allincms-projects/allincms-run/confirmation-record.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --review-packet ~/allincms-projects/allincms-run/source-package-review-packet.json
    python3 skills/allincms-bulk-content-upload/scripts/build_confirmed_site_execution_plan.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/confirmation-record.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/confirmation-record.json \
      --target-mode new_site \
-     --output /tmp/allincms-run/confirmed-site-execution-plan.json
+     --output ~/allincms-projects/allincms-run/confirmed-site-execution-plan.json
    python3 skills/allincms-bulk-content-upload/scripts/export_confirmed_site_artifacts.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/confirmed-site-execution-plan.json \
-     --output-dir /tmp/allincms-run/confirmed-artifacts
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/confirmed-site-execution-plan.json \
+     --output-dir ~/allincms-projects/allincms-run/confirmed-artifacts
    ```
 
    This confirms content intent only. It does not authorize create-site, save, publish, route binding, media upload, domain binding, tracking, or batch upload. Continue to use action-specific mutation authorization records and pre-mutation gates.
@@ -274,10 +274,10 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_pages_site_info_execution.py \
-     --pages-plan /tmp/allincms-run/execution/confirmed-artifacts/pages-plan.json \
-     --site-info-plan /tmp/allincms-run/execution/confirmed-artifacts/site-info-plan.json \
-     --preflight /tmp/allincms-run/created-site-evidence.json \
-     --output-dir /tmp/allincms-run/pages-site-info
+     --pages-plan ~/allincms-projects/allincms-run/execution/confirmed-artifacts/pages-plan.json \
+     --site-info-plan ~/allincms-projects/allincms-run/execution/confirmed-artifacts/site-info-plan.json \
+     --preflight ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/pages-site-info
    ```
 
    This handoff is local-only. It does not save site-info, create pages, save design, publish, enable, bind routes, or prove frontend rendering. Use it to choose one action at a time, replace any `{themeId}` or `{pageId}` placeholder with current browser evidence, then request action-time authorization and run the matching pre-mutation gate.
@@ -285,9 +285,9 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_taxonomy_execution.py \
-     --taxonomy-plan /tmp/allincms-run/execution/confirmed-artifacts/taxonomy-plan.json \
-     --preflight /tmp/allincms-run/created-site-evidence.json \
-     --output-dir /tmp/allincms-run/taxonomy
+     --taxonomy-plan ~/allincms-projects/allincms-run/execution/confirmed-artifacts/taxonomy-plan.json \
+     --preflight ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/taxonomy
    ```
 
    This handoff is local-only. It does not create categories, tags, or mappings. Execute one term action at a time only after current UI/request schema is captured, action-time authorization exists, and the generated pre-mutation gate passes. If an evidence bundle exists, fill `taxonomy-execution-evidence.filled.json`, run its validation command, then run its apply command instead of hand-writing taxonomy evidence from memory. Apply completed taxonomy proof with `apply_taxonomy_execution.py` before batch upload depends on taxonomy. When a manifest contains `categories`, `tags`, or `categoryIds`, pass the resulting validation report into upload readiness and batch preparation with `--taxonomy-validation`; otherwise those helpers must block the run.
@@ -295,13 +295,13 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/build_confirmed_create_site_handoff.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --review-packet /tmp/allincms-run/source-package-review-packet.json \
-     --confirmation /tmp/allincms-run/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/confirmed-site-execution-plan.json \
-     --preflight /tmp/allincms-create-site-preflight.json \
-     --authorization-output /tmp/allincms-authorization-create-site.json \
-     --output /tmp/allincms-create-site-handoff.json
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --review-packet ~/allincms-projects/allincms-run/source-package-review-packet.json \
+     --confirmation ~/allincms-projects/allincms-run/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/confirmed-site-execution-plan.json \
+     --preflight ~/allincms-projects/allincms-create-site-preflight.json \
+     --authorization-output ~/allincms-projects/allincms-authorization-create-site.json \
+     --output ~/allincms-projects/allincms-create-site-handoff.json
    ```
 
    The handoff is not user authorization and does not create a site. It exists to bind the confirmed package's `siteName` and `siteDescription` to the current create-site preflight, preserve the authorization placeholder, and forbid uploads/publish/theme/domain work in the same mutation.
@@ -311,13 +311,13 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_created_site_schema_capture.py \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-     --package /tmp/allincms-run/source-site-package.json \
-     --review-packet /tmp/allincms-run/source-package-review-packet.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-     --output-dir /tmp/allincms-run/created-site-schema-capture
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --review-packet ~/allincms-projects/allincms-run/source-package-review-packet.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+     --output-dir ~/allincms-projects/allincms-run/created-site-schema-capture
    ```
 
    This writes bound manifests, created-site artifact binding, pages/site-info browser handoff and evidence bundle, taxonomy execution handoff and evidence bundle, schema-capture handoff, schema-capture progress, and refreshed source execution status. Follow the summary's `nextAction`; source status may correctly stop at pages/site-info execution or taxonomy execution before schema probes. Do not hand-edit site keys, schema flags, taxonomy state, or page/site-info action targets.
@@ -326,27 +326,27 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_default_theme_bootstrap.py \
-     --preflight /tmp/allincms-run/created-site-evidence.json \
-     --output /tmp/allincms-run/default-theme-bootstrap-runbook.json
+     --preflight ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --output ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json
    ```
 
    Execute `create_theme` and `activate_theme` as two separately authorized browser mutations, then validate the redacted evidence:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/validate_default_theme_bootstrap_evidence.py \
-     /tmp/allincms-run/default-theme-bootstrap-evidence.json \
-     --runbook /tmp/allincms-run/default-theme-bootstrap-runbook.json \
-     --output /tmp/allincms-run/default-theme-bootstrap-validation.json
+     ~/allincms-projects/allincms-run/default-theme-bootstrap-evidence.json \
+     --runbook ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json \
+     --output ~/allincms-projects/allincms-run/default-theme-bootstrap-validation.json
    ```
 
    Then apply the validated foundation proof back into the created-site evidence and rerun the next preparation step from the refreshed evidence:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_default_theme_bootstrap.py \
-     --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-     --runbook /tmp/allincms-run/default-theme-bootstrap-runbook.json \
-     --bootstrap-evidence /tmp/allincms-run/default-theme-bootstrap-evidence.json \
-     --output-dir /tmp/allincms-run/default-theme-bootstrap-applied \
+     --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --runbook ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json \
+     --bootstrap-evidence ~/allincms-projects/allincms-run/default-theme-bootstrap-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/default-theme-bootstrap-applied \
      --fail-on-invalid
    ```
 
@@ -356,15 +356,15 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_default_theme_bootstrap.py \
-     --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-     --runbook /tmp/allincms-run/default-theme-bootstrap-runbook.json \
-     --bootstrap-evidence /tmp/allincms-run/default-theme-bootstrap-evidence.json \
-     --output-dir /tmp/allincms-run/default-theme-bootstrap-applied \
+     --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --runbook ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json \
+     --bootstrap-evidence ~/allincms-projects/allincms-run/default-theme-bootstrap-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/default-theme-bootstrap-applied \
      --prepare-created-site-schema-capture \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
      --fail-on-invalid
    ```
 
@@ -374,29 +374,29 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_source_next_stage.py \
-     --status /tmp/allincms-run/source-execution-status.json \
-     --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-     --default-theme-bootstrap-runbook /tmp/allincms-run/default-theme-bootstrap-runbook.json \
-     --default-theme-bootstrap-evidence /tmp/allincms-run/default-theme-bootstrap-evidence.json \
-     --output /tmp/allincms-run/source-next-stage-handoff.after-default-theme-bootstrap.json \
-     --output-dir /tmp/allincms-run/next-stage
+     --status ~/allincms-projects/allincms-run/source-execution-status.json \
+     --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --default-theme-bootstrap-runbook ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json \
+     --default-theme-bootstrap-evidence ~/allincms-projects/allincms-run/default-theme-bootstrap-evidence.json \
+     --output ~/allincms-projects/allincms-run/source-next-stage-handoff.after-default-theme-bootstrap.json \
+     --output-dir ~/allincms-projects/allincms-run/next-stage
    ```
 
    After authorized pages/site-info browser actions run and redacted execution evidence is captured, validate and apply that evidence before continuing:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_pages_site_info_execution.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --create-site-handoff /tmp/allincms-run/execution/confirmed-create-site-handoff.json \
-     --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-     --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-     --pages-site-info-evidence /tmp/allincms-run/pages-site-info-execution-evidence.json \
-     --taxonomy-handoff /tmp/allincms-run/created-site-schema-capture/taxonomy/taxonomy-execution-handoff.json \
-     --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-     --output-dir /tmp/allincms-run/pages-site-info-applied
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --create-site-handoff ~/allincms-projects/allincms-run/execution/confirmed-create-site-handoff.json \
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+     --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+     --pages-site-info-evidence ~/allincms-projects/allincms-run/pages-site-info-execution-evidence.json \
+     --taxonomy-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/taxonomy/taxonomy-execution-handoff.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+     --output-dir ~/allincms-projects/allincms-run/pages-site-info-applied
    ```
 
    Follow the refreshed `source-execution-status.after-pages-site-info.json`; a valid pages/site-info stage does not skip taxonomy, schema, sample, batch, launch, or cleanup gates.
@@ -405,18 +405,18 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_taxonomy_execution.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --create-site-handoff /tmp/allincms-run/execution/confirmed-create-site-handoff.json \
-     --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-     --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-     --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-     --taxonomy-handoff /tmp/allincms-run/created-site-schema-capture/taxonomy/taxonomy-execution-handoff.json \
-     --taxonomy-evidence /tmp/allincms-run/taxonomy-execution-evidence.json \
-     --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-     --output-dir /tmp/allincms-run/taxonomy-applied
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --create-site-handoff ~/allincms-projects/allincms-run/execution/confirmed-create-site-handoff.json \
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+     --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+     --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+     --taxonomy-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/taxonomy/taxonomy-execution-handoff.json \
+     --taxonomy-evidence ~/allincms-projects/allincms-run/taxonomy-execution-evidence.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+     --output-dir ~/allincms-projects/allincms-run/taxonomy-applied
    ```
 
    Feed the resulting `taxonomy-execution-validation.json` into manifest readiness, schema/sample status, and batch preparation whenever products/posts carry taxonomy fields.
@@ -425,10 +425,10 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/bind_created_site_to_artifacts.py \
-     --artifact-readiness /tmp/allincms-run/confirmed-artifacts/artifact-readiness.json \
-     --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-     --output-dir /tmp/allincms-run/created-site-bound-artifacts \
-     --output /tmp/allincms-run/created-site-artifact-binding.json
+     --artifact-readiness ~/allincms-projects/allincms-run/confirmed-artifacts/artifact-readiness.json \
+     --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/created-site-bound-artifacts \
+     --output ~/allincms-projects/allincms-run/created-site-artifact-binding.json
    ```
 
    This step is local-only. It must keep `schemaVerified: false`; products and posts still need separate save-request capture, schema binding, sample upload, and frontend verification. If you run this debug command, point its `--output` at the same path the downstream apply/schema-capture step reads as `--created-site-binding` (the orchestrator writes `created-site-artifact-binding.json` under its `--output-dir`); otherwise the later apply step will not find the binding.
@@ -436,10 +436,10 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/build_schema_capture_handoff.py \
-     --created-site-binding /tmp/allincms-run/created-site-artifact-binding.json \
-     --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-     --output-dir /tmp/allincms-run/schema-capture \
-     --output /tmp/allincms-run/schema-capture-handoff.json
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-artifact-binding.json \
+     --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/schema-capture \
+     --output ~/allincms-projects/allincms-run/schema-capture-handoff.json
    ```
 
    The handoff is local preparation only. It does not create probes, save, publish, upload, or authorize browser mutations. If it reports `needs_readonly_content_preflight` for posts or products, first inspect that content type's list/edit fields and regenerate evidence before preparing create-probe authorization. Do not let products field proof stand in for posts, or posts proof stand in for products.
@@ -448,15 +448,15 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/merge_content_type_preflight.py \
-     --created-evidence /tmp/allincms-run/created-site-evidence.json \
-     --refresh-evidence /tmp/allincms-run/posts-readonly-evidence.json \
+     --created-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+     --refresh-evidence ~/allincms-projects/allincms-run/posts-readonly-evidence.json \
      --content-type posts \
-     --output /tmp/allincms-run/created-site-evidence.posts-preflight.json
+     --output ~/allincms-projects/allincms-run/created-site-evidence.posts-preflight.json
    python3 skills/allincms-bulk-content-upload/scripts/build_schema_capture_handoff.py \
-     --created-site-binding /tmp/allincms-run/created-site-artifact-binding.json \
-     --created-site-evidence /tmp/allincms-run/created-site-evidence.posts-preflight.json \
-     --output-dir /tmp/allincms-run/schema-capture \
-     --output /tmp/allincms-run/schema-capture-handoff.json
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-artifact-binding.json \
+     --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.posts-preflight.json \
+     --output-dir ~/allincms-projects/allincms-run/schema-capture \
+     --output ~/allincms-projects/allincms-run/schema-capture-handoff.json
    ```
 
    The refresh evidence must be same-site `existing_site_selected` evidence and must list the current site key in `existingSiteKeysBeforeCreate`; otherwise the merge must fail.
@@ -465,14 +465,14 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/summarize_schema_capture_progress.py \
-     --schema-capture-handoff /tmp/allincms-run/schema-capture-handoff.json \
-     --create-evidence products=/tmp/allincms-run/schema-capture/products-create-evidence.json \
-     --save-handoff products=/tmp/allincms-run/schema-capture/products-save-handoff.json \
-     --save-runbook products=/tmp/allincms-run/schema-capture/products-save-runbook.json \
-     --save-capture products=/tmp/allincms-run/schema-capture/products-save-capture-evidence.json \
-     --base-run-evidence products=/tmp/allincms-run/schema-capture/products-after-save-capture.json \
-     --schema-manifest products=/tmp/allincms-run/products-schema-verified-manifest.json \
-     --output /tmp/allincms-run/schema-capture-progress.json
+     --schema-capture-handoff ~/allincms-projects/allincms-run/schema-capture-handoff.json \
+     --create-evidence products=~/allincms-projects/allincms-run/schema-capture/products-create-evidence.json \
+     --save-handoff products=~/allincms-projects/allincms-run/schema-capture/products-save-handoff.json \
+     --save-runbook products=~/allincms-projects/allincms-run/schema-capture/products-save-runbook.json \
+     --save-capture products=~/allincms-projects/allincms-run/schema-capture/products-save-capture-evidence.json \
+     --base-run-evidence products=~/allincms-projects/allincms-run/schema-capture/products-after-save-capture.json \
+     --schema-manifest products=~/allincms-projects/allincms-run/products-schema-verified-manifest.json \
+     --output ~/allincms-projects/allincms-run/schema-capture-progress.json
    ```
 
    Treat `results[].status` as the current boundary for each content type. `schema_manifest_ready` means the next step is one manifest sample runbook, not batch upload.
@@ -481,14 +481,14 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_schema_save_capture.py \
-     --schema-capture-handoff /tmp/allincms-run/schema-capture-handoff.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/schema-capture-handoff.json \
      --content-type products \
-     --create-evidence /tmp/allincms-run/schema-capture/products-create-evidence.json \
-     --output-dir /tmp/allincms-run/schema-capture/products-save-prep
+     --create-evidence ~/allincms-projects/allincms-run/schema-capture/products-create-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/schema-capture/products-save-prep
    ```
 
    This writes a save handoff, save runbook, and refreshed schema-capture progress. It does not save the probe. Request `save_probe` action-time authorization and run the pre-mutation gate before executing the runbook.
-22. Normalize posts/products source content into a manifest JSON. If the run used `export_confirmed_site_artifacts.py`, start from the bound manifest paths in `/tmp/allincms-run/created-site-bound-artifacts/` after new-site creation, or from `/tmp/allincms-run/confirmed-artifacts/products-draft-manifest.json` and `/tmp/allincms-run/confirmed-artifacts/posts-draft-manifest.json` only when an existing site key was already passed at export time. For media, themes, routes, or forms, use the exported plan JSON only as source-confirmed planning; first capture the real request and build a dedicated validator before JSON replay.
+22. Normalize posts/products source content into a manifest JSON. If the run used `export_confirmed_site_artifacts.py`, start from the bound manifest paths in `~/allincms-projects/allincms-run/created-site-bound-artifacts/` after new-site creation, or from `~/allincms-projects/allincms-run/confirmed-artifacts/products-draft-manifest.json` and `~/allincms-projects/allincms-run/confirmed-artifacts/posts-draft-manifest.json` only when an existing site key was already passed at export time. For media, themes, routes, or forms, use the exported plan JSON only as source-confirmed planning; first capture the real request and build a dedicated validator before JSON replay.
 23. Run local posts/products manifest validation before upload:
 
    ```bash
@@ -508,13 +508,13 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_save_capture_to_manifest.py \
-     --manifest /tmp/allincms-run/confirmed-artifacts/products-draft-manifest.json \
-     --save-capture-evidence /tmp/allincms-products-save-capture-evidence.json \
-     --base-run-evidence /tmp/allincms-products-run-evidence-after-save-capture.json \
-     --output /tmp/allincms-run/products-schema-verified-manifest.json
+     --manifest ~/allincms-projects/allincms-run/confirmed-artifacts/products-draft-manifest.json \
+     --save-capture-evidence ~/allincms-projects/allincms-products-save-capture-evidence.json \
+     --base-run-evidence ~/allincms-projects/allincms-products-run-evidence-after-save-capture.json \
+     --output ~/allincms-projects/allincms-run/products-schema-verified-manifest.json
    python3 skills/allincms-bulk-content-upload/scripts/validate_manifest.py \
      --require-schema-verified \
-     /tmp/allincms-run/products-schema-verified-manifest.json
+     ~/allincms-projects/allincms-run/products-schema-verified-manifest.json
    ```
 
    Repeat separately for posts. A schema-verified manifest still only proves local schema binding; sample upload/publish and backend/frontend verification remain required before batch upload.
@@ -523,20 +523,20 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_schema_manifest_sample.py \
-     --manifest /tmp/allincms-run/created-site-bound-artifacts/products-draft-manifest.bound-created-site.json \
-     --save-capture-evidence /tmp/allincms-run/schema-capture/products-save-capture-evidence.json \
-     --base-run-evidence /tmp/allincms-run/schema-capture/products-after-save-capture.json \
-     --schema-capture-handoff /tmp/allincms-run/schema-capture-handoff.json \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --create-site-handoff /tmp/allincms-run/execution/confirmed-create-site-handoff.json \
-     --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-     --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-     --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-     --taxonomy-validation /tmp/allincms-run/taxonomy-applied/taxonomy-execution-validation.json \
-     --output-dir /tmp/allincms-run/schema-capture/products-schema-manifest-sample
+     --manifest ~/allincms-projects/allincms-run/created-site-bound-artifacts/products-draft-manifest.bound-created-site.json \
+     --save-capture-evidence ~/allincms-projects/allincms-run/schema-capture/products-save-capture-evidence.json \
+     --base-run-evidence ~/allincms-projects/allincms-run/schema-capture/products-after-save-capture.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/schema-capture-handoff.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --create-site-handoff ~/allincms-projects/allincms-run/execution/confirmed-create-site-handoff.json \
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+     --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+     --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+     --taxonomy-validation ~/allincms-projects/allincms-run/taxonomy-applied/taxonomy-execution-validation.json \
+     --output-dir ~/allincms-projects/allincms-run/schema-capture/products-schema-manifest-sample
    ```
 
    This creates the schema-verified manifest, upload readiness report, sample runbook, sample evidence bundle, refreshed schema-capture progress, and, when source-status inputs are supplied, `source-execution-status.after-schema-manifest.json`. It does not upload or publish the sample; request sample action-time authorization and pass the sample gate before browser execution. Follow the refreshed source status instead of assuming sample upload is next; pages/site-info, taxonomy, or schema-capture blockers can still be earlier.
@@ -547,8 +547,8 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/make_manifest_upload_readiness.py \
-     /tmp/products-manifest.json /tmp/posts-manifest.json \
-     --output /tmp/allincms-upload-readiness-report.json
+     ~/allincms-projects/products-manifest.json ~/allincms-projects/posts-manifest.json \
+     --output ~/allincms-projects/allincms-upload-readiness-report.json
    ```
 
    `overallStatus: blocked` is expected until every manifest passes the schema gate for its own content type.
@@ -558,29 +558,29 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/build_manifest_sample_upload_runbook.py \
-     --manifest /tmp/allincms-run/products-schema-verified-manifest.json \
+     --manifest ~/allincms-projects/allincms-run/products-schema-verified-manifest.json \
      --target https://workspace.laicms.com/current-site-key/products \
-     --authorization-output /tmp/allincms-authorization-products-sample.json \
-     --output /tmp/allincms-products-sample-runbook.json
+     --authorization-output ~/allincms-projects/allincms-authorization-products-sample.json \
+     --output ~/allincms-projects/allincms-products-sample-runbook.json
    python3 skills/allincms-bulk-content-upload/scripts/validate_manifest_sample_upload_evidence.py \
-     /tmp/allincms-products-sample-evidence.json \
-     --manifest /tmp/allincms-run/products-schema-verified-manifest.json \
-     --output /tmp/allincms-products-sample-validation.json
+     ~/allincms-projects/allincms-products-sample-evidence.json \
+     --manifest ~/allincms-projects/allincms-run/products-schema-verified-manifest.json \
+     --output ~/allincms-projects/allincms-products-sample-validation.json
    python3 skills/allincms-bulk-content-upload/scripts/apply_manifest_sample_upload.py \
-     --manifest /tmp/allincms-run/products-schema-verified-manifest.json \
-     --sample-evidence /tmp/allincms-products-sample-evidence.json \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --create-site-handoff /tmp/allincms-run/execution/confirmed-create-site-handoff.json \
-     --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-     --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-     --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-     --taxonomy-validation /tmp/allincms-run/taxonomy-applied/taxonomy-execution-validation.json \
-     --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-     --upload-readiness /tmp/allincms-run/schema-capture/products-schema-manifest-sample/products-upload-readiness.json \
-     --output-dir /tmp/allincms-run/manifest-sample-applied
+     --manifest ~/allincms-projects/allincms-run/products-schema-verified-manifest.json \
+     --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --create-site-handoff ~/allincms-projects/allincms-run/execution/confirmed-create-site-handoff.json \
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+     --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+     --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+     --taxonomy-validation ~/allincms-projects/allincms-run/taxonomy-applied/taxonomy-execution-validation.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+     --upload-readiness ~/allincms-projects/allincms-run/schema-capture/products-schema-manifest-sample/products-upload-readiness.json \
+     --output-dir ~/allincms-projects/allincms-run/manifest-sample-applied
    ```
 
    The runbook is local preparation only. It restricts the browser mutation to one `sampleSlug`; it must not process the rest of the manifest, clean probes, or touch themes/routes/settings. The evidence must prove save, publish, backend state, frontend detail, body, media or accepted no-media note, and no blocking issues.
@@ -593,12 +593,12 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_batch_upload_publish.py \
-     --run-evidence /tmp/allincms-run-evidence-after-save-capture.json \
-     --manifest /tmp/allincms-run/products-schema-verified-manifest.json \
-     --sample-evidence /tmp/allincms-products-sample-evidence.json \
-     --output-dir /tmp/allincms-run/batch-products \
+     --run-evidence ~/allincms-projects/allincms-run-evidence-after-save-capture.json \
+     --manifest ~/allincms-projects/allincms-run/products-schema-verified-manifest.json \
+     --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/batch-products \
      --target https://workspace.laicms.com/current-site-key/products \
-     --authorization-output /tmp/allincms-authorization-products-batch.json
+     --authorization-output ~/allincms-projects/allincms-authorization-products-batch.json
    ```
 
    Then request action-time batch authorization, create the authorization record from the runbook template, and run the pre-mutation gate. The runbook's `preMutationGateCommand` must include the same sample evidence. Fill the bundle's `batch-upload-publish-evidence.filled.json`, final-audit command, validation command, and apply command after the real browser batch run instead of hand-writing batch evidence from memory:
@@ -606,30 +606,30 @@ Read only the references needed for the current task:
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
      --action batch_upload \
-     --preflight /tmp/allincms-run-evidence-after-save-capture.json \
-     --authorization /tmp/allincms-authorization-products-batch.json \
-     --sample-evidence /tmp/allincms-products-sample-evidence.json
+     --preflight ~/allincms-projects/allincms-run-evidence-after-save-capture.json \
+     --authorization ~/allincms-projects/allincms-authorization-products-batch.json \
+     --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json
    ```
-   After the authorized batch browser run, apply the redacted batch evidence back into source execution status. If the generated batch evidence bundle was used, prefer routing through `prepare_source_next_stage.py --batch-evidence-bundle /tmp/.../evidence-bundle.json`; it derives the filled evidence, manifest, base run evidence, and `final-audit-report.redacted.json` paths before emitting `apply_batch_upload_publish.py`.
+   After the authorized batch browser run, apply the redacted batch evidence back into source execution status. If the generated batch evidence bundle was used, prefer routing through `prepare_source_next_stage.py --batch-evidence-bundle ~/allincms-projects/.../evidence-bundle.json`; it derives the filled evidence, manifest, base run evidence, and `final-audit-report.redacted.json` paths before emitting `apply_batch_upload_publish.py`.
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_batch_upload_publish.py \
-     --batch-evidence /tmp/allincms-batch-upload-evidence.json \
-     --manifest /tmp/allincms-run/products-schema-verified-manifest.json \
-     --base-run-evidence /tmp/allincms-run-evidence-after-save-capture.json \
-     --frontend-audit-report /tmp/allincms-final-audit-report.json \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --create-site-handoff /tmp/allincms-run/execution/confirmed-create-site-handoff.json \
-     --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-     --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-     --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-     --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-     --upload-readiness /tmp/allincms-run/schema-capture/products-schema-manifest-sample/products-upload-readiness.json \
-     --sample-evidence /tmp/allincms-products-sample-evidence.json \
-     --output-dir /tmp/allincms-run/batch-applied
+     --batch-evidence ~/allincms-projects/allincms-batch-upload-evidence.json \
+     --manifest ~/allincms-projects/allincms-run/products-schema-verified-manifest.json \
+     --base-run-evidence ~/allincms-projects/allincms-run-evidence-after-save-capture.json \
+     --frontend-audit-report ~/allincms-projects/allincms-final-audit-report.json \
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --create-site-handoff ~/allincms-projects/allincms-run/execution/confirmed-create-site-handoff.json \
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+     --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+     --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+     --upload-readiness ~/allincms-projects/allincms-run/schema-capture/products-schema-manifest-sample/products-upload-readiness.json \
+     --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/batch-applied
    ```
 
    Use the refreshed `source-execution-status.after-batch-upload.json` before moving to launch acceptance; a standalone batch validation report does not by itself update the source-stage boundary.
@@ -641,15 +641,15 @@ Read only the references needed for the current task:
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/validate_launch_acceptance.py \
      --require-created-site \
-     --run-evidence /tmp/allincms-run-evidence.json \
-     --module-coverage /tmp/allincms-module-coverage.json \
-     --upload-readiness /tmp/allincms-upload-readiness-report.json \
-     --batch-evidence /tmp/allincms-batch-upload-evidence.json \
-     --batch-validation /tmp/allincms-batch-upload-validation.json \
-     --forms-media-settings /tmp/allincms-forms-media-settings.json \
-     --final-frontend-audit /tmp/allincms-final-frontend-audit-stage-result.json \
-     --cleanup-evidence /tmp/allincms-probe-cleanup-evidence.json \
-     --round-closeout /tmp/allincms-round-closeout.json
+     --run-evidence ~/allincms-projects/allincms-run-evidence.json \
+     --module-coverage ~/allincms-projects/allincms-module-coverage.json \
+     --upload-readiness ~/allincms-projects/allincms-upload-readiness-report.json \
+     --batch-evidence ~/allincms-projects/allincms-batch-upload-evidence.json \
+     --batch-validation ~/allincms-projects/allincms-batch-upload-validation.json \
+     --forms-media-settings ~/allincms-projects/allincms-forms-media-settings.json \
+     --final-frontend-audit ~/allincms-projects/allincms-final-frontend-audit-stage-result.json \
+     --cleanup-evidence ~/allincms-projects/allincms-probe-cleanup-evidence.json \
+     --round-closeout ~/allincms-projects/allincms-round-closeout.json
    ```
 
    If only local rehearsal/stage coverage exists, expect this gate to fail and report the remaining live proof instead of claiming launch completion.
@@ -658,28 +658,28 @@ Read only the references needed for the current task:
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/apply_launch_acceptance.py \
      --require-created-site \
-     --run-evidence /tmp/allincms-run-evidence.json \
-     --module-coverage /tmp/allincms-module-coverage.json \
-     --upload-readiness /tmp/allincms-upload-readiness-report.json \
-     --batch-evidence /tmp/allincms-batch-upload-evidence.json \
-     --batch-validation /tmp/allincms-batch-upload-validation.json \
-     --forms-media-settings /tmp/allincms-forms-media-settings.json \
-     --final-frontend-audit /tmp/allincms-final-frontend-audit-stage-result.json \
-     --cleanup-evidence /tmp/allincms-probe-cleanup-evidence.json \
+     --run-evidence ~/allincms-projects/allincms-run-evidence.json \
+     --module-coverage ~/allincms-projects/allincms-module-coverage.json \
+     --upload-readiness ~/allincms-projects/allincms-upload-readiness-report.json \
+     --batch-evidence ~/allincms-projects/allincms-batch-upload-evidence.json \
+     --batch-validation ~/allincms-projects/allincms-batch-upload-validation.json \
+     --forms-media-settings ~/allincms-projects/allincms-forms-media-settings.json \
+     --final-frontend-audit ~/allincms-projects/allincms-final-frontend-audit-stage-result.json \
+     --cleanup-evidence ~/allincms-projects/allincms-probe-cleanup-evidence.json \
      --auto-final-closeout \
      --final-closeout-sedimentation updated \
      --final-closeout-sedimentation-note "Recorded final source-run launch proof." \
-     --package /tmp/allincms-run/source-site-package.json \
-     --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-     --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-     --create-site-handoff /tmp/allincms-run/execution/confirmed-create-site-handoff.json \
-     --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-     --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-     --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-     --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-     --sample-evidence /tmp/allincms-products-sample-evidence.json \
-     --output-dir /tmp/allincms-run/launch-acceptance-applied
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+     --create-site-handoff ~/allincms-projects/allincms-run/execution/confirmed-create-site-handoff.json \
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+     --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+     --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+     --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+     --output-dir ~/allincms-projects/allincms-run/launch-acceptance-applied
    ```
 
    Use the refreshed `source-execution-status.after-launch-acceptance.json`; a standalone launch validation report proves the launch gate result but does not by itself update the source-stage dashboard.
@@ -687,20 +687,20 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/summarize_source_execution_status.py \
-     --package /tmp/allincms-run/source-site-package.json \
-     --review-packet /tmp/allincms-run/source-package-review-packet.json \
-     --confirmation /tmp/allincms-run/confirmation-record.json \
-     --execution-plan /tmp/allincms-run/confirmed-site-execution-plan.json \
-     --artifact-readiness /tmp/allincms-run/confirmed-artifacts/artifact-readiness.json \
-     --create-site-handoff /tmp/allincms-run/confirmed-create-site-handoff.json \
-     --pages-site-info-handoff /tmp/allincms-run/pages-site-info/pages-site-info-browser-handoff.json \
-     --created-site-binding /tmp/allincms-run/created-site-artifact-binding.json \
-     --schema-capture-handoff /tmp/allincms-run/schema-capture-handoff.json \
-     --upload-readiness /tmp/allincms-run/upload-readiness.json \
-     --sample-evidence /tmp/allincms-products-sample-evidence.json \
-     --batch-validation /tmp/allincms-batch-upload-validation.json \
-     --launch-acceptance /tmp/allincms-launch-acceptance.json \
-     --output /tmp/allincms-source-execution-status.json
+     --package ~/allincms-projects/allincms-run/source-site-package.json \
+     --review-packet ~/allincms-projects/allincms-run/source-package-review-packet.json \
+     --confirmation ~/allincms-projects/allincms-run/confirmation-record.json \
+     --execution-plan ~/allincms-projects/allincms-run/confirmed-site-execution-plan.json \
+     --artifact-readiness ~/allincms-projects/allincms-run/confirmed-artifacts/artifact-readiness.json \
+     --create-site-handoff ~/allincms-projects/allincms-run/confirmed-create-site-handoff.json \
+     --pages-site-info-handoff ~/allincms-projects/allincms-run/pages-site-info/pages-site-info-browser-handoff.json \
+     --created-site-binding ~/allincms-projects/allincms-run/created-site-artifact-binding.json \
+     --schema-capture-handoff ~/allincms-projects/allincms-run/schema-capture-handoff.json \
+     --upload-readiness ~/allincms-projects/allincms-run/upload-readiness.json \
+     --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+     --batch-validation ~/allincms-projects/allincms-batch-upload-validation.json \
+     --launch-acceptance ~/allincms-projects/allincms-launch-acceptance.json \
+     --output ~/allincms-projects/allincms-source-execution-status.json
    ```
 
    Treat `currentStage` as the next work boundary. Do not claim the full source-file-to-site goal is done unless this status is `complete` and launch acceptance also passes.
@@ -708,9 +708,9 @@ Read only the references needed for the current task:
 
    ```bash
    python3 skills/allincms-bulk-content-upload/scripts/prepare_source_next_stage.py \
-     --status /tmp/allincms-source-execution-status.json \
-     --output /tmp/allincms-source-next-stage-handoff.json \
-     --output-dir /tmp/allincms-next-stage
+     --status ~/allincms-projects/allincms-source-execution-status.json \
+     --output ~/allincms-projects/allincms-source-next-stage-handoff.json \
+     --output-dir ~/allincms-projects/allincms-next-stage
    ```
 
    If `currentStage=created_site_binding` and the browser proof exists only as a filled created-site evidence bundle, pass `--created-site-evidence-bundle` and `--filled-created-site-evidence-template`; the handoff should emit `apply_created_site_evidence_bundle.py --prepare-created-site-schema-capture` instead of asking you to hand-copy fields into `make_created_site_evidence.py`. If `currentStage=sample_upload` and the browser proof exists in a manifest sample evidence bundle, pass `--sample-evidence-bundle`; the handoff should derive the filled evidence path and manifest before emitting `apply_manifest_sample_upload.py`. If the handoff emits any `localCommand`, inspect placeholders and run it only after the named evidence exists. If it reports `browserWorkRequired=true`, perform the browser work through the stage-specific authorization, pre-mutation gate, and evidence validator. Regenerate source status and use the newly emitted `sourceNextStageHandoff` after each completed, partial, or blocked stage.
@@ -731,14 +731,14 @@ python3 skills/allincms-bulk-content-upload/scripts/audit_frontend_rendering.py 
 After changing this skill package, run:
 
 ```bash
-PYTHONPYCACHEPREFIX=/tmp/allincms-pycache python3 -m py_compile \
+PYTHONPYCACHEPREFIX=~/allincms-projects/allincms-pycache python3 -m py_compile \
   skills/allincms-bulk-content-upload/scripts/*.py
 python3 skills/allincms-bulk-content-upload/scripts/audit_skill_hygiene.py
 python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py \
   skills/allincms-bulk-content-upload
 ```
 
-Use `PYTHONPYCACHEPREFIX=/tmp/allincms-pycache` for `py_compile` in restricted sandboxes so Python does not try to write bytecode under `~/Library/Caches`.
+Use `PYTHONPYCACHEPREFIX=~/allincms-projects/allincms-pycache` for `py_compile` in restricted sandboxes so Python does not try to write bytecode under `~/Library/Caches`.
 
 Before claiming an end-to-end simulation is complete, run:
 
@@ -754,9 +754,9 @@ Before a final response for a browser, rehearsal, or run-evidence round, save th
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/summarize_run_status.py \
   path/to/run-evidence.json \
-  --output /tmp/allincms-run-summary.json
+  --output ~/allincms-projects/allincms-run-summary.json
 python3 skills/allincms-bulk-content-upload/scripts/check_round_closeout.py \
-  --summary /tmp/allincms-run-summary.json \
+  --summary ~/allincms-projects/allincms-run-summary.json \
   --sedimentation updated \
   --note "Recorded reusable platform finding in operational-findings.md." \
   --round-issue "Captured a reusable platform finding and recorded it in the skill."
@@ -768,11 +768,11 @@ When the run summary emits `nextActionDetails`, prepare the next authorization p
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_next_action_authorization.py \
-  /tmp/allincms-run-summary.json \
+  ~/allincms-projects/allincms-run-summary.json \
   --action create_product_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
   --expect-missing-authorization-failure \
-  --output /tmp/allincms-next-action-authorization-package.json
+  --output ~/allincms-projects/allincms-next-action-authorization-package.json
 ```
 
 The output is a preparation artifact only. It must keep `preparedOnly: true`, `isUserAuthorization: false`, and an authorization-source placeholder in the command template. Do not run the authorization-record command or mutate LAICMS until the current user provides matching action-time authorization text.
@@ -785,10 +785,10 @@ For a `module_interface_capture` browser-stage package, bind the validator to th
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_stage_authorization_package.py \
-  /tmp/allincms-browser-stage-authorization-package.json \
-  --packet-json /tmp/allincms-next-browser-stage-packet.json \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --capture-plan /tmp/allincms-real-site-module-capture-plan.json
+  ~/allincms-projects/allincms-browser-stage-authorization-package.json \
+  --packet-json ~/allincms-projects/allincms-next-browser-stage-packet.json \
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --capture-plan ~/allincms-projects/allincms-real-site-module-capture-plan.json
 ```
 
 This prevents a valid-looking single-action package from drifting away from the current module/action plan. Passing this validator still means "safe to ask the user for action-time authorization", not "safe to run".
@@ -797,13 +797,13 @@ Before asking the user to authorize the next real browser action, wrap the valid
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_next_browser_action_handoff.py \
-  --package /tmp/allincms-browser-stage-authorization-package.json \
-  --packet-json /tmp/allincms-next-browser-stage-packet.json \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --capture-plan /tmp/allincms-real-site-module-capture-plan.json \
-  --output /tmp/allincms-next-browser-action-handoff.json
+  --package ~/allincms-projects/allincms-browser-stage-authorization-package.json \
+  --packet-json ~/allincms-projects/allincms-next-browser-stage-packet.json \
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --capture-plan ~/allincms-projects/allincms-real-site-module-capture-plan.json \
+  --output ~/allincms-projects/allincms-next-browser-action-handoff.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_next_browser_action_handoff.py \
-  /tmp/allincms-next-browser-action-handoff.json
+  ~/allincms-projects/allincms-next-browser-action-handoff.json
 ```
 
 Use the handoff to present the exact target, action, stop condition, required proof, suggested authorization text, authorization-record command, and pre-mutation gate. The handoff is still preparation only; it does not grant permission to run commands or operate the browser.
@@ -812,8 +812,8 @@ Before asking the user for action-time authorization, write a readiness report s
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_handoff_readiness.py \
-  /tmp/allincms-next-browser-action-handoff.json \
-  --output /tmp/allincms-next-browser-action-readiness.json \
+  ~/allincms-projects/allincms-next-browser-action-handoff.json \
+  --output ~/allincms-projects/allincms-next-browser-action-readiness.json \
   --fail-on-blocked
 ```
 
@@ -823,13 +823,13 @@ After generating a real-site module capture plan, create the full local checklis
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_all_capture_authorizations.py \
-  /tmp/allincms-real-site-module-capture-plan.json \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --output-dir /tmp/allincms-capture-authorization-packages \
-  --summary-output /tmp/allincms-capture-authorization-packages/summary.json
+  ~/allincms-projects/allincms-real-site-module-capture-plan.json \
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --output-dir ~/allincms-projects/allincms-capture-authorization-packages \
+  --summary-output ~/allincms-projects/allincms-capture-authorization-packages/summary.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_all_capture_authorizations.py \
-  /tmp/allincms-capture-authorization-packages/summary.json \
-  --plan-json /tmp/allincms-real-site-module-capture-plan.json
+  ~/allincms-projects/allincms-capture-authorization-packages/summary.json \
+  --plan-json ~/allincms-projects/allincms-real-site-module-capture-plan.json
 ```
 
 Use the resulting `summary.json` to choose exactly one next action. A valid package set means every action has a safe preparation record; it does not grant permission to run any command and does not prove JSON replay readiness. Continue to use `prepare_browser_stage_authorization.py` for the single selected browser-stage packet before asking for action-time authorization.
@@ -839,13 +839,13 @@ For a documentation-only, helper-script, request-analysis, or validation-only ro
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_round_maintenance_summary.py \
-  --output /tmp/allincms-maintenance-summary.json \
+  --output ~/allincms-projects/allincms-maintenance-summary.json \
   --sedimentation updated \
   --note "Recorded reusable closeout finding in operational-findings.md." \
   --changed-files "skills/allincms-bulk-content-upload/SKILL.md,skills/allincms-bulk-content-upload/references/operational-findings.md" \
   --round-issue "Closeout wording allowed reusable issues to remain only in chat."
 python3 skills/allincms-bulk-content-upload/scripts/check_round_closeout.py \
-  --summary /tmp/allincms-maintenance-summary.json \
+  --summary ~/allincms-projects/allincms-maintenance-summary.json \
   --sedimentation updated \
   --note "Recorded reusable closeout finding in operational-findings.md." \
   --changed-files "skills/allincms-bulk-content-upload/SKILL.md,skills/allincms-bulk-content-upload/references/operational-findings.md" \
@@ -858,7 +858,7 @@ After creating a site and auditing static frontend routes plus backend launch st
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_created_site_evidence.py \
-  --preflight /tmp/allincms-create-site-preflight.json \
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json \
   --created-site-key new-site-key \
   --content-type products \
   --list-columns "媒体,名称,Slug,描述,排序,状态,分类,标签,创建时间" \
@@ -875,9 +875,9 @@ python3 skills/allincms-bulk-content-upload/scripts/make_created_site_evidence.p
   --module-routes "/new-site-key/dashboard,/new-site-key/products,/new-site-key/posts,/new-site-key/media,/new-site-key/themes,/new-site-key/routes,/new-site-key/forms,/new-site-key/site-info,/new-site-key/tracking,/new-site-key/domains" \
   --submitted-fields name,description \
   --authorization-source "current user explicitly authorizes create site at https://workspace.laicms.com/sites for new-site-key" \
-  --frontend-rendering-evidence /tmp/allincms-frontend-rendering-evidence.json \
-  --launch-readiness-evidence /tmp/allincms-launch-readiness-evidence.json \
-  --output /tmp/allincms-created-site-evidence.json
+  --frontend-rendering-evidence ~/allincms-projects/allincms-frontend-rendering-evidence.json \
+  --launch-readiness-evidence ~/allincms-projects/allincms-launch-readiness-evidence.json \
+  --output ~/allincms-projects/allincms-created-site-evidence.json
 ```
 
 When the user asked to start from site creation, use the stricter summary gate:
@@ -895,7 +895,7 @@ For a one-command local-only full dry run that does not touch LAICMS, run:
 python3 skills/allincms-bulk-content-upload/scripts/run_full_rehearsal.py \
   --existing-site-keys old-site-a,old-site-b \
   --site-key-evidence "old-site-a from backend url route https://workspace.laicms.com/old-site-a/dashboard;old-site-b from backend url route https://workspace.laicms.com/old-site-b/dashboard" \
-  --output-dir /tmp/allincms-full-rehearsal
+  --output-dir ~/allincms-projects/allincms-full-rehearsal
 ```
 
 This orchestrates the create-site dry run, module interface planning dry run, probe lifecycle dry run, manifest/schema-gate rehearsal, full output validation, next-stage handoff generation, handoff safety validation, launch proof planning, browser execution planning, execution ledger generation, next-stage packet generation, simulated first-stage result application, and plan/ledger/packet/result validation. It writes `full-e2e/`, `next-capture-handoff/handoff.json`, `launch-plan.json`, `browser-execution-plan.json`, `browser-execution-ledger.json`, `next-browser-stage-packet.json`, stage-result and ledger artifacts through static audit, content-probe creation, save-request capture, and `rehearsal-summary.json`. It proves local helper compatibility and evidence-state modeling, not remote LAICMS persistence.
@@ -904,9 +904,9 @@ After a stage result is applied, generate a fresh packet from the updated ledger
 
 Use `ledger.nextStageId` as the authoritative next-stage pointer after applying a browser stage result. Do not infer readiness by filtering `stages` for `status == "ready"`; some ledgers intentionally expose the ready stage through `nextStageId` and derived counts while stage entries remain dependency records. Build the next packet from the ledger instead of hand-picking stages.
 
-Stage results must include auditable redacted evidence pointers, not free text such as `done`, `ok`, or `verified`. Use pointers like `local://redacted-scan.json`, `/tmp/allincms-run/stage-result.json`, `./run-evidence/stage.json`, or a redacted backend/frontend URL. Proof labels explain what was checked; evidence pointers identify where the proof can be inspected.
+Stage results must include auditable redacted evidence pointers, not free text such as `done`, `ok`, or `verified`. Use pointers like `local://redacted-scan.json`, `~/allincms-projects/allincms-run/stage-result.json`, `./run-evidence/stage.json`, or a redacted backend/frontend URL. Proof labels explain what was checked; evidence pointers identify where the proof can be inspected.
 
-Packet `ledgerUpdate.commandTemplate` must be tied to the actual generated ledger, packet, stage-result, and updated-ledger paths for the current run. Do not copy an older packet whose command still points at another `/tmp/allincms-full-rehearsal...` directory. If a packet was built without paths and contains `{ledgerPath}`, `{packetPath}`, `{stageResultPath}`, or `{updatedLedgerPath}`, replace those placeholders with the current run files before applying a stage result.
+Packet `ledgerUpdate.commandTemplate` must be tied to the actual generated ledger, packet, stage-result, and updated-ledger paths for the current run. Do not copy an older packet whose command still points at another `~/allincms-projects/allincms-full-rehearsal...` directory. If a packet was built without paths and contains `{ledgerPath}`, `{packetPath}`, `{stageResultPath}`, or `{updatedLedgerPath}`, replace those placeholders with the current run files before applying a stage result.
 
 When applying a browser stage result or regenerating a packet, use the exact `ledgerUpdate.commandTemplate`, `operatorHandoff.ledgerApplyCommand`, or the helper's `--help` output. Do not infer CLI flags from nearby scripts. In particular, `apply_browser_stage_result.py` does not provide a `--json` flag, and `build_browser_stage_packet.py` takes the ledger JSON as a positional argument.
 
@@ -916,8 +916,8 @@ Before running the browser stage, create a local evidence bundle from the packet
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_evidence_bundle.py \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet.json \
-  --output-dir /tmp/allincms-stage-proof
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json \
+  --output-dir ~/allincms-projects/allincms-stage-proof
 ```
 
 The bundle is scaffolding only. It does not authorize browser actions and does not prove persistence. Fill it with redacted browser, network, backend, and frontend proof, then use those pointers when creating the stage result.
@@ -926,17 +926,17 @@ Validate the bundle before using it for a real browser stage or ledger apply:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_stage_evidence_bundle.py \
-  /tmp/allincms-stage-proof \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet.json
+  ~/allincms-projects/allincms-stage-proof \
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json
 ```
 
 Before executing an authorization-required browser packet, prepare the local authorization package when supported:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_authorization.py \
-  /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-first-stage.json \
-  --preflight /tmp/allincms-create-site-preflight.json \
-  --authorization-output /tmp/allincms-authorization-create-site.json
+  ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-first-stage.json \
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json \
+  --authorization-output ~/allincms-projects/allincms-authorization-create-site.json
 ```
 
 The package only creates command templates and suggested wording. It is not user authorization. If `gateSupported` is false, stop and extend the helper/gate before mutating that stage.
@@ -945,9 +945,9 @@ Validate the prepared package against the current packet and preflight before as
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_stage_authorization_package.py \
-  /tmp/allincms-browser-stage-authorization-package.json \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-first-stage.json \
-  --preflight /tmp/allincms-create-site-preflight.json
+  ~/allincms-projects/allincms-browser-stage-authorization-package.json \
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-first-stage.json \
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json
 ```
 
 This validation must pass with the authorization-source placeholder still present. Only after the user provides fresh action-time authorization should `make_authorization_record.py` write the authorization JSON and `check_pre_mutation_gate.py` unlock the real browser mutation.
@@ -956,11 +956,11 @@ If the next step is queue/gap-audit planning, convert the validated browser-stag
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_browser_stage_authorization_readiness.py \
-  /tmp/allincms-browser-stage-authorization-package.json \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-setup-pages.json \
-  --preflight /tmp/allincms-created-site-evidence.json \
-  --capture-plan /tmp/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
-  --output /tmp/allincms-browser-stage-authorization-readiness.json
+  ~/allincms-projects/allincms-browser-stage-authorization-package.json \
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-setup-pages.json \
+  --preflight ~/allincms-projects/allincms-created-site-evidence.json \
+  --capture-plan ~/allincms-projects/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
+  --output ~/allincms-projects/allincms-browser-stage-authorization-readiness.json
 ```
 
 Use the generated readiness as `make_browser_stage_queue.py --readiness`. If it reports `blocked_refresh_readonly_evidence`, refresh read-only evidence and rebuild the package before asking for authorization.
@@ -969,11 +969,11 @@ For `module_interface_capture`, pass the current capture plan and, after the fir
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_authorization.py \
-  /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-setup-pages.json \
-  --preflight /tmp/allincms-created-site-evidence.json \
-  --authorization-output /tmp/allincms-authorization-module-capture.json \
-  --capture-plan /tmp/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
-  --coverage /tmp/allincms-full-rehearsal/module-capture-coverage-after-one-stage.json
+  ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-setup-pages.json \
+  --preflight ~/allincms-projects/allincms-created-site-evidence.json \
+  --authorization-output ~/allincms-projects/allincms-authorization-module-capture.json \
+  --capture-plan ~/allincms-projects/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json \
+  --coverage ~/allincms-projects/allincms-full-rehearsal/module-capture-coverage-after-one-stage.json
 ```
 
 If `commandsSuppressed` is true, the packet came from a simulated target and must be rebuilt from real browser evidence before LAICMS mutation. Do not use `--allow-command-output` except for local helper tests.
@@ -984,9 +984,9 @@ For `theme_page_route_launch`, never ask for or prepare permission for the aggre
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_authorization.py \
-  /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-module-capture.json \
-  --preflight /tmp/allincms-created-site-evidence.json \
-  --authorization-output /tmp/allincms-authorization-save-design.json \
+  ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-module-capture.json \
+  --preflight ~/allincms-projects/allincms-created-site-evidence.json \
+  --authorization-output ~/allincms-projects/allincms-authorization-save-design.json \
   --launch-action save_design \
   --launch-target https://workspace.laicms.com/{realSiteKey}/themes/{themeId}/{pageId}/design \
   --launch-target-identifier "{themeId}/{pageId} design"
@@ -998,9 +998,9 @@ For content probe lifecycle browser packets, prepare one content action at a tim
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_authorization.py \
-  /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-static-audit.json \
-  --preflight /tmp/allincms-created-site-evidence.json \
-  --authorization-output /tmp/allincms-authorization-product-probe.json \
+  ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-static-audit.json \
+  --preflight ~/allincms-projects/allincms-created-site-evidence.json \
+  --authorization-output ~/allincms-projects/allincms-authorization-product-probe.json \
   --content-type products \
   --content-target https://workspace.laicms.com/{realSiteKey}/products \
   --content-target-identifier "Codex Probe - Delete Me product draft"
@@ -1012,9 +1012,9 @@ For `batch_upload_publish`, prepare one batch action only after the current site
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_authorization.py \
-  /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-manifest-gate.json \
-  --preflight /tmp/allincms-created-site-evidence.json \
-  --authorization-output /tmp/allincms-authorization-batch-upload.json \
+  ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-manifest-gate.json \
+  --preflight ~/allincms-projects/allincms-created-site-evidence.json \
+  --authorization-output ~/allincms-projects/allincms-authorization-batch-upload.json \
   --content-type products \
   --content-target https://workspace.laicms.com/{realSiteKey}/products \
   --content-target-identifier "products manifest batch"
@@ -1026,23 +1026,23 @@ Before the real browser batch stage, build and inspect the runbook:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_batch_upload_publish_runbook.py \
-  --run-evidence /tmp/allincms-run-evidence-after-publish-sample.json \
-  --manifest /tmp/allincms-schema-verified-manifest.json \
+  --run-evidence ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --manifest ~/allincms-projects/allincms-schema-verified-manifest.json \
   --target https://workspace.laicms.com/{realSiteKey}/products \
   --target-identifier "products manifest batch" \
-  --authorization-output /tmp/allincms-authorization-batch-upload.json \
-  --output /tmp/allincms-batch-upload-runbook.json
+  --authorization-output ~/allincms-projects/allincms-authorization-batch-upload.json \
+  --output ~/allincms-projects/allincms-batch-upload-runbook.json
 ```
 
 After the browser batch run, validate the redacted evidence before using it to unlock forms/settings or final audit:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_batch_upload_publish_evidence.py \
-  /tmp/allincms-batch-upload-evidence.json \
-  --manifest /tmp/allincms-schema-verified-manifest.json \
-  --base-run-evidence /tmp/allincms-run-evidence-after-publish-sample.json \
-  --frontend-audit-report /tmp/allincms-final-audit-report.json \
-  --output /tmp/allincms-batch-upload-validation.json
+  ~/allincms-projects/allincms-batch-upload-evidence.json \
+  --manifest ~/allincms-projects/allincms-schema-verified-manifest.json \
+  --base-run-evidence ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --frontend-audit-report ~/allincms-projects/allincms-final-audit-report.json \
+  --output ~/allincms-projects/allincms-batch-upload-validation.json
 ```
 
 The evidence must prove one progress entry per manifest slug, `saveStatus: ok`, `publishStatus: ok`, backend/frontend verification, cover/media verification, body verification, and an empty frontend detail audit issue list. HTTP 200 without DOM/rich-text/image proof is not enough.
@@ -1051,9 +1051,9 @@ For `forms_media_settings`, never ask for or prepare permission for the aggregat
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_authorization.py \
-  /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-batch-upload.json \
-  --preflight /tmp/allincms-created-site-evidence.json \
-  --authorization-output /tmp/allincms-authorization-save-site-settings.json \
+  ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-batch-upload.json \
+  --preflight ~/allincms-projects/allincms-created-site-evidence.json \
+  --authorization-output ~/allincms-projects/allincms-authorization-save-site-settings.json \
   --settings-action save_site_settings \
   --settings-target https://workspace.laicms.com/{realSiteKey}/site-info \
   --settings-target-identifier "site-info settings"
@@ -1071,7 +1071,7 @@ Before executing any capture-plan stage generated from module scanning, validate
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_capture_plan_gate_coverage.py \
-  /tmp/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json
+  ~/allincms-projects/allincms-full-rehearsal/full-e2e/03-module-interface-plan/module-capture-plan.json
 ```
 
 If this fails, stop and extend `make_authorization_record.py`, `prepare_capture_authorization.py`, or `check_pre_mutation_gate.py` before touching the browser. `upload_media` is the only intentionally ungated capture action in the current helper set; it is still authorization-required and UI-first until multipart/storage behavior is captured.
@@ -1080,7 +1080,7 @@ After a specific action has been captured and a single authorized sample replay 
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_action_replay_contract.py \
-  /tmp/allincms-action-replay-contract.json
+  ~/allincms-projects/allincms-action-replay-contract.json
 ```
 
 The contract is per action, not per module. It must include current `siteKey`, exact `requestUrl`, method, redacted required header names, payload keys/shape, required id field names, authorization action, backend persistence proof, public frontend proof when applicable, and cleanup/rollback plan. Do not store cookie/header values, raw `next-action` IDs, raw router state, or raw payloads. Passing this contract validator proves only that this one action is locally replay-ready; it does not authorize replay, batch upload, neighboring actions, or future sessions.
@@ -1089,10 +1089,10 @@ When every captured module/action stage has a matching valid contract, aggregate
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_action_replay_contracts.py \
-  --coverage /tmp/allincms-module-capture-coverage.json \
-  --contract /tmp/allincms-products-create-replay-contract.json \
-  --contract /tmp/allincms-posts-create-replay-contract.json \
-  --output /tmp/allincms-module-capture-coverage-replay-ready.json
+  --coverage ~/allincms-projects/allincms-module-capture-coverage.json \
+  --contract ~/allincms-projects/allincms-products-create-replay-contract.json \
+  --contract ~/allincms-projects/allincms-posts-create-replay-contract.json \
+  --output ~/allincms-projects/allincms-module-capture-coverage-replay-ready.json
 ```
 
 This may set `actionReplayContractsVerified: true` and `jsonReplayReady: true` only for the listed contracts. It is still local evidence, not action-time user authorization. Use it to decide whether JSON acceleration is technically ready; then request a fresh action-specific authorization before replaying anything.
@@ -1101,9 +1101,9 @@ Before reporting a full rehearsal artifact, validate the top-level summary too. 
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_full_rehearsal.py \
-  /tmp/allincms-full-rehearsal/rehearsal-summary.json
+  ~/allincms-projects/allincms-full-rehearsal/rehearsal-summary.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_runbook_summary.py \
-  /tmp/allincms-full-rehearsal/browser-runbook-summary.json
+  ~/allincms-projects/allincms-full-rehearsal/browser-runbook-summary.json
 ```
 
 Do not read `rehearsal-summary.json` or `browser-runbook-summary.json` as run-evidence summaries. They do not expose `valid`, `complete`, or `completionGaps`. Rehearsal success is proven by the two validators above and by safety blocks such as `fullE2EValidation.ok`, `handoffSafety.ok`, `browserExecutionPlanSafety.ok`, `browserExecutionLedgerSafety.ok`, and `nextBrowserActionHandoffSafety.ok`. Use `summarize_run_status.py` only on run-evidence JSON.
@@ -1111,7 +1111,7 @@ Do not read `rehearsal-summary.json` or `browser-runbook-summary.json` as run-ev
 Inspect the generated real-browser runbook summary before acting on the rehearsal:
 
 ```bash
-cat /tmp/allincms-full-rehearsal/browser-runbook-summary.json
+cat ~/allincms-projects/allincms-full-rehearsal/browser-runbook-summary.json
 ```
 
 Use this summary to decide the next real browser step, not the long artifact list. When it says commands are suppressed or the source rehearsal is invalid, refresh real browser evidence or fix the rehearsal before any LAICMS mutation. The first real step after a local-only from-scratch rehearsal should normally be a read-only `/sites` refresh and create-dialog open/close proof, not a mutation. For an external or older rehearsal summary that lacks the integrated artifact, generate it manually with `scripts/make_browser_runbook_summary.py`.
@@ -1163,14 +1163,14 @@ Before `final_frontend_audit`, generate the URL/status files from the schema-ver
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_final_frontend_audit_inputs.py \
-  --manifest /tmp/allincms-schema-verified-manifest.json \
-  --progress-log /tmp/allincms-batch-progress.json \
+  --manifest ~/allincms-projects/allincms-schema-verified-manifest.json \
+  --progress-log ~/allincms-projects/allincms-batch-progress.json \
   --require-schema-verified \
   --require-progress-complete \
   --static-paths /,/products,/about-us,/contact-us \
-  --urls-output /tmp/allincms-final-audit-urls.txt \
-  --statuses-output /tmp/allincms-final-expected-statuses.json \
-  --summary-output /tmp/allincms-final-audit-inputs-summary.json
+  --urls-output ~/allincms-projects/allincms-final-audit-urls.txt \
+  --statuses-output ~/allincms-projects/allincms-final-expected-statuses.json \
+  --summary-output ~/allincms-projects/allincms-final-audit-inputs-summary.json
 ```
 
 The generated URL file may contain concrete slugs because it is a runtime audit input. Keep those files in temporary run evidence, not in this skill package. Convert the redacted audit output with `make_frontend_rendering_evidence.py` before copying route proof into run evidence.
@@ -1179,12 +1179,12 @@ Then convert the redacted final audit report into the browser stage result befor
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_final_frontend_audit_stage_result.py \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-forms-media-settings-complete.json \
-  --audit-report-json /tmp/allincms-final-audit-report.json \
-  --audit-inputs-summary-json /tmp/allincms-final-audit-inputs-summary.json \
-  --expected-statuses-json /tmp/allincms-final-expected-statuses.json \
-  --evidence-pointers /tmp/allincms-final-audit-report.json,/tmp/allincms-final-audit-inputs-summary.json \
-  --output /tmp/allincms-final-frontend-audit-stage-result.json
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-forms-media-settings-complete.json \
+  --audit-report-json ~/allincms-projects/allincms-final-audit-report.json \
+  --audit-inputs-summary-json ~/allincms-projects/allincms-final-audit-inputs-summary.json \
+  --expected-statuses-json ~/allincms-projects/allincms-final-expected-statuses.json \
+  --evidence-pointers ~/allincms-projects/allincms-final-audit-report.json,~/allincms-projects/allincms-final-audit-inputs-summary.json \
+  --output ~/allincms-projects/allincms-final-frontend-audit-stage-result.json
 ```
 
 Apply the generated result with `scripts/apply_browser_stage_result.py`. Do not hand-write `final_frontend_audit` proof; if the helper outputs `partial`, keep cleanup locked until the missing expected route coverage, HTTP, DOM/rich-text, image, or broken-entry proof is fixed and the same stage is recovered.
@@ -1200,7 +1200,7 @@ python3 skills/allincms-bulk-content-upload/scripts/simulate_site_creation_chain
   --existing-site-keys old-site-a,old-site-b \
   --site-key-evidence "old-site-a from backend url route https://workspace.laicms.com/old-site-a/dashboard;old-site-b from backend url route https://workspace.laicms.com/old-site-b/dashboard" \
   --include-simulated-static-launch \
-  --output-dir /tmp/allincms-site-creation-simulation
+  --output-dir ~/allincms-projects/allincms-site-creation-simulation
 ```
 
 This dry run proves the local evidence chain and validators, not that a site was created.
@@ -1211,9 +1211,9 @@ After a created-site or existing-site evidence file is available, run a local-on
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/simulate_probe_lifecycle.py \
-  --base /tmp/allincms-site-creation-simulation/created-site-evidence.json \
+  --base ~/allincms-projects/allincms-site-creation-simulation/created-site-evidence.json \
   --require-created-site \
-  --output-dir /tmp/allincms-probe-lifecycle-simulation
+  --output-dir ~/allincms-projects/allincms-probe-lifecycle-simulation
 ```
 
 This writes staged authorization and evidence files for create probe, save/request capture, publish/sample verification, cleanup, plus `run-summary.json` and `round-closeout.json`. It proves the local probe evidence chain and gates, not that remote content was created, saved, published, or deleted.
@@ -1226,9 +1226,9 @@ python3 skills/allincms-bulk-content-upload/scripts/make_create_preflight_eviden
   --site-key-evidence "old-site-a from backend url route https://workspace.laicms.com/old-site-a/dashboard;old-site-b from backend url route https://workspace.laicms.com/old-site-b/dashboard" \
   --observed-create-fields "button: 创建站点;dialog title: 创建站点;input name: name, placeholder: 站点名称;textarea name: description, placeholder: 站点简介;submit button: 创建;close button: Close" \
   --dialog-closed-verified \
-  --output /tmp/allincms-create-site-preflight.json
+  --output ~/allincms-projects/allincms-create-site-preflight.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py \
-  /tmp/allincms-create-site-preflight.json
+  ~/allincms-projects/allincms-create-site-preflight.json
 ```
 
 If the workspace site list is verified empty, use `--no-existing-sites` instead of `--existing-site-keys`.
@@ -1249,14 +1249,14 @@ python3 skills/allincms-bulk-content-upload/scripts/make_authorization_record.py
   --verification-plan "verify site card, backend dashboard, frontend base URL, and module routes" \
   --cleanup-plan "no automatic deletion; stop before content upload" \
   --authorization-source "current user explicitly authorizes creating a site at https://workspace.laicms.com/sites with name and description" \
-  --output /tmp/allincms-authorization-create-site.json
+  --output ~/allincms-projects/allincms-authorization-create-site.json
 ```
 
 Validate any existing authorization record before using it:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_authorization_record.py \
-  --validate-only /tmp/allincms-authorization-create-site.json
+  --validate-only ~/allincms-projects/allincms-authorization-create-site.json
 ```
 
 Immediately before submitting the create-site form, run the final gate:
@@ -1264,8 +1264,8 @@ Immediately before submitting the create-site form, run the final gate:
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action create_site \
-  --preflight /tmp/allincms-create-site-preflight.json \
-  --authorization /tmp/allincms-authorization-create-site.json
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json \
+  --authorization ~/allincms-projects/allincms-authorization-create-site.json
 ```
 
 The final gate requires both JSON files to have recent `generatedAt` timestamps and defaults to a 30 minute maximum age. Regenerate stale preflight or authorization records instead of editing timestamps by hand.

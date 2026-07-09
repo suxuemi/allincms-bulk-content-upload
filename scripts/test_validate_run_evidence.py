@@ -2043,10 +2043,10 @@ def final_frontend_audit_packet() -> dict:
             "stageResultRequired": True,
             "commandTemplate": (
                 "python3 skills/allincms-bulk-content-upload/scripts/apply_browser_stage_result.py "
-                "--ledger /tmp/allincms-full-rehearsal/browser-execution-ledger.json "
-                "--packet /tmp/allincms-full-rehearsal/next-browser-stage-packet.json "
+                "--ledger ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.json "
+                "--packet ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json "
                 "--result-json /tmp/allincms-stage-result.json "
-                "--output /tmp/allincms-full-rehearsal/browser-execution-ledger.updated.json"
+                "--output ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.updated.json"
             ),
         },
         "warnings": ["This packet is local-only and does not authorize remote LAICMS mutation."],
@@ -10983,7 +10983,7 @@ def test_full_rehearsal_runs_all_local_gates_and_writes_summary() -> None:
             assert str(packet_path) in command
             assert str(packet_path.with_name(packet_path.stem + "-stage-result.json")) in command
             assert str(ledger_path.with_name(ledger_path.stem + f".after-{packet['stageId']}.json")) in command
-            assert "/tmp/allincms-full-rehearsal/" not in command or str(packet_path).startswith("/tmp/allincms-full-rehearsal/")
+            assert "~/allincms-projects/allincms-full-rehearsal/" not in command or str(packet_path).startswith("~/allincms-projects/allincms-full-rehearsal/")
 
         assert_packet_command_paths(browser_stage_packet, browser_execution_ledger_path, browser_stage_packet_path)
         assert_packet_command_paths(
@@ -11801,10 +11801,10 @@ def test_full_rehearsal_validator_rejects_packet_command_path_drift() -> None:
         packet = json.loads(packet_path.read_text(encoding="utf-8"))
         packet["ledgerUpdate"]["commandTemplate"] = (
             "python3 skills/allincms-bulk-content-upload/scripts/apply_browser_stage_result.py "
-            "--ledger /tmp/allincms-full-rehearsal/browser-execution-ledger.json "
-            "--packet /tmp/allincms-full-rehearsal/next-browser-stage-packet.json "
+            "--ledger ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.json "
+            "--packet ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet.json "
             "--result-json /tmp/allincms-stage-result.json "
-            "--output /tmp/allincms-full-rehearsal/browser-execution-ledger.updated.json"
+            "--output ~/allincms-projects/allincms-full-rehearsal/browser-execution-ledger.updated.json"
         )
         packet_path.write_text(json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         validation = validate_rehearsal(summary_path)

@@ -221,13 +221,13 @@ def build_launch_plan(
                 "--frontend-base-url https://{realSiteKey}.web.allincms.com "
                 f"--static-paths {','.join(static_paths)} "
                 f"--detail-probe-paths {','.join(detail_route_patterns)} "
-                "--urls-output /tmp/allincms-launch-audit-urls.txt "
-                "--statuses-output /tmp/allincms-launch-expected-statuses.json"
+                "--urls-output ~/allincms-projects/allincms-launch-audit-urls.txt "
+                "--statuses-output ~/allincms-projects/allincms-launch-expected-statuses.json"
             ),
             "frontendAudit": (
                 "python3 skills/allincms-bulk-content-upload/scripts/audit_frontend_rendering.py "
-                "--json --redact --urls-file /tmp/allincms-launch-audit-urls.txt "
-                "--expect-statuses-file /tmp/allincms-launch-expected-statuses.json"
+                "--json --redact --urls-file ~/allincms-projects/allincms-launch-audit-urls.txt "
+                "--expect-statuses-file ~/allincms-projects/allincms-launch-expected-statuses.json"
             ),
         },
         "warnings": [

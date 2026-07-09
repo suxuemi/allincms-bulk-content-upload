@@ -181,7 +181,7 @@ def build_runbook(
         "preMutationGateCommand": (
             "python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py "
             "--action batch_upload "
-            f"--preflight /tmp/current-run-evidence-after-save-capture.json "
+            f"--preflight ~/allincms-projects/current-run-evidence-after-save-capture.json "
             f"--authorization {authorization_output}"
         ),
         "mustRunBeforeBrowserSample": [

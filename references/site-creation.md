@@ -105,12 +105,12 @@ Do not use a visible site-card count as a substitute for `existingSiteKeysBefore
 Before pressing the final `创建` button, all three local checks must pass in sequence:
 
 ```bash
-python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py /tmp/allincms-create-site-preflight.json
-python3 skills/allincms-bulk-content-upload/scripts/make_authorization_record.py --validate-only /tmp/allincms-authorization-create-site.json
+python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py ~/allincms-projects/allincms-create-site-preflight.json
+python3 skills/allincms-bulk-content-upload/scripts/make_authorization_record.py --validate-only ~/allincms-projects/allincms-authorization-create-site.json
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action create_site \
-  --preflight /tmp/allincms-create-site-preflight.json \
-  --authorization /tmp/allincms-authorization-create-site.json
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json \
+  --authorization ~/allincms-projects/allincms-authorization-create-site.json
 ```
 
 The final gate rejects existing-site evidence, stale or malformed preflight evidence, generic authorization, wrong target URLs, and authorization records that omit `name` or `description`.
@@ -119,14 +119,14 @@ When the next browser packet is `create_site_submit`, first prepare and validate
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_browser_stage_authorization.py \
-  /tmp/allincms-next-browser-stage-packet.json \
-  --preflight /tmp/allincms-create-site-preflight.json \
-  --authorization-output /tmp/allincms-authorization-create-site.json \
-  --output /tmp/allincms-create-site-authorization-package.json
+  ~/allincms-projects/allincms-next-browser-stage-packet.json \
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json \
+  --authorization-output ~/allincms-projects/allincms-authorization-create-site.json \
+  --output ~/allincms-projects/allincms-create-site-authorization-package.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_browser_stage_authorization_package.py \
-  /tmp/allincms-create-site-authorization-package.json \
-  --packet-json /tmp/allincms-next-browser-stage-packet.json \
-  --preflight /tmp/allincms-create-site-preflight.json
+  ~/allincms-projects/allincms-create-site-authorization-package.json \
+  --packet-json ~/allincms-projects/allincms-next-browser-stage-packet.json \
+  --preflight ~/allincms-projects/allincms-create-site-preflight.json
 ```
 
 This package validation proves only that the suggested text, command templates, `/sites` target, `name,description` fields, placeholder authorization source, and create-site gate are aligned. It is not user permission. Record fresh user authorization after this validation and rerun the pre-mutation gate immediately before submitting the form.
@@ -135,13 +135,13 @@ When site creation follows a confirmed source package, add one more local bindin
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_confirmed_create_site_handoff.py \
-  --package /tmp/run/source-site-package.json \
-  --review-packet /tmp/run/source-package-review-packet.json \
-  --confirmation /tmp/run/confirmation-record.json \
-  --execution-plan /tmp/run/confirmed-site-execution-plan.json \
-  --preflight /tmp/run/create-site-preflight.json \
-  --authorization-output /tmp/run/authorization-create-site.json \
-  --output /tmp/run/create-site-handoff.json
+  --package ~/allincms-projects/run/source-site-package.json \
+  --review-packet ~/allincms-projects/run/source-package-review-packet.json \
+  --confirmation ~/allincms-projects/run/confirmation-record.json \
+  --execution-plan ~/allincms-projects/run/confirmed-site-execution-plan.json \
+  --preflight ~/allincms-projects/run/create-site-preflight.json \
+  --authorization-output ~/allincms-projects/run/authorization-create-site.json \
+  --output ~/allincms-projects/run/create-site-handoff.json
 ```
 
 This handoff checks that the confirmed package, review packet, confirmation, `new_site` execution plan, and fresh `/sites` preflight all agree. It uses the confirmed `siteProposal.siteName` and `siteProposal.siteDescription` as the only create-site form data, keeps the authorization placeholder, and explicitly forbids content upload, publish, theme, route, domain, media, or tracking work in the same action. Passing this handoff still means "ready to ask for create-site authorization", not "authorized to submit".
@@ -168,10 +168,10 @@ When the existing-site evidence was generated from the same fresh `/sites` refre
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_create_preflight_from_existing_site_evidence.py \
-  /tmp/allincms-existing-site-readonly-evidence.json \
-  --output /tmp/allincms-create-site-preflight.json
+  ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --output ~/allincms-projects/allincms-create-site-preflight.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_run_evidence.py \
-  /tmp/allincms-create-site-preflight.json
+  ~/allincms-projects/allincms-create-site-preflight.json
 ```
 
 This helper is a conversion tool only. It does not create a site and does not create user authorization.
@@ -242,10 +242,10 @@ For source-package-driven new sites, bind the created site identity into exporte
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/bind_created_site_to_artifacts.py \
-  --artifact-readiness /tmp/run/confirmed-artifacts/artifact-readiness.json \
-  --created-site-evidence /tmp/run/created-site-evidence.json \
-  --output-dir /tmp/run/created-site-bound-artifacts \
-  --output /tmp/run/created-site-artifact-binding.json
+  --artifact-readiness ~/allincms-projects/run/confirmed-artifacts/artifact-readiness.json \
+  --created-site-evidence ~/allincms-projects/run/created-site-evidence.json \
+  --output-dir ~/allincms-projects/run/created-site-bound-artifacts \
+  --output ~/allincms-projects/run/created-site-artifact-binding.json
 ```
 
 This prevents placeholder `{siteKey-after-creation}` or stale frontend base URLs from entering later upload runbooks. The bound manifests are still draft-only: `schemaVerified` must remain false until products/posts save-request capture and sample verification pass.
@@ -254,10 +254,10 @@ Before creating content probes from those bound manifests, build the schema-capt
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_schema_capture_handoff.py \
-  --created-site-binding /tmp/run/created-site-artifact-binding.json \
-  --created-site-evidence /tmp/run/created-site-evidence.json \
-  --output-dir /tmp/run/schema-capture \
-  --output /tmp/run/schema-capture-handoff.json
+  --created-site-binding ~/allincms-projects/run/created-site-artifact-binding.json \
+  --created-site-evidence ~/allincms-projects/run/created-site-evidence.json \
+  --output-dir ~/allincms-projects/run/schema-capture \
+  --output ~/allincms-projects/run/schema-capture-handoff.json
 ```
 
 This handoff keeps the new-site flow honest: products and posts each need their own list/edit preflight before create-probe authorization. It does not create drafts, save probes, publish samples, or make the manifests upload-ready.
@@ -266,10 +266,10 @@ If a content type is blocked by missing read-only preflight, inspect that list/e
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/merge_content_type_preflight.py \
-  --created-evidence /tmp/run/created-site-evidence.json \
-  --refresh-evidence /tmp/run/posts-readonly-evidence.json \
+  --created-evidence ~/allincms-projects/run/created-site-evidence.json \
+  --refresh-evidence ~/allincms-projects/run/posts-readonly-evidence.json \
   --content-type posts \
-  --output /tmp/run/created-site-evidence.posts-preflight.json
+  --output ~/allincms-projects/run/created-site-evidence.posts-preflight.json
 ```
 
 The merge output preserves the original created-site proof but switches top-level `contentInspection` to the target content type so the normal create-probe pre-mutation gate can use it.
@@ -288,8 +288,8 @@ When the frontend is 404/blank and read-only setup evidence shows no usable them
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/prepare_default_theme_bootstrap.py \
-  --preflight /tmp/allincms-run/created-site-evidence.json \
-  --output /tmp/allincms-run/default-theme-bootstrap-runbook.json
+  --preflight ~/allincms-projects/allincms-run/created-site-evidence.json \
+  --output ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json
 ```
 
 The runbook is preparation only. It splits the browser work into two mutations: `create_theme` with preset `默认`, then `activate_theme` after route mapping is reviewed. Each action still needs its own authorization record and `check_pre_mutation_gate.py` pass.
@@ -298,37 +298,37 @@ After the browser stage, validate redacted evidence:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_default_theme_bootstrap_evidence.py \
-  /tmp/allincms-run/default-theme-bootstrap-evidence.json \
-  --runbook /tmp/allincms-run/default-theme-bootstrap-runbook.json \
-  --output /tmp/allincms-run/default-theme-bootstrap-validation.json
+  ~/allincms-projects/allincms-run/default-theme-bootstrap-evidence.json \
+  --runbook ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json \
+  --output ~/allincms-projects/allincms-run/default-theme-bootstrap-validation.json
 ```
 
 After validation, apply the bootstrap result to created-site evidence before rebuilding pages/site-info, taxonomy, or schema-capture handoffs:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_default_theme_bootstrap.py \
-  --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-  --runbook /tmp/allincms-run/default-theme-bootstrap-runbook.json \
-  --bootstrap-evidence /tmp/allincms-run/default-theme-bootstrap-evidence.json \
-  --output-dir /tmp/allincms-run/default-theme-bootstrap-applied \
+  --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+  --runbook ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json \
+  --bootstrap-evidence ~/allincms-projects/allincms-run/default-theme-bootstrap-evidence.json \
+  --output-dir ~/allincms-projects/allincms-run/default-theme-bootstrap-applied \
   --fail-on-invalid
 ```
 
-Use `/tmp/allincms-run/default-theme-bootstrap-applied/created-site-evidence.after-default-theme-bootstrap.json` as the next created-site evidence input. Do not keep using stale pre-bootstrap evidence after the public site was blank: later helpers need updated themes/routes/frontend foundation proof, while still treating business content as incomplete.
+Use `~/allincms-projects/allincms-run/default-theme-bootstrap-applied/created-site-evidence.after-default-theme-bootstrap.json` as the next created-site evidence input. Do not keep using stale pre-bootstrap evidence after the public site was blank: later helpers need updated themes/routes/frontend foundation proof, while still treating business content as incomplete.
 
 For source-package runs, prefer the chained local path when artifact readiness and confirmation context are available:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_default_theme_bootstrap.py \
-  --created-site-evidence /tmp/allincms-run/created-site-evidence.json \
-  --runbook /tmp/allincms-run/default-theme-bootstrap-runbook.json \
-  --bootstrap-evidence /tmp/allincms-run/default-theme-bootstrap-evidence.json \
-  --output-dir /tmp/allincms-run/default-theme-bootstrap-applied \
+  --created-site-evidence ~/allincms-projects/allincms-run/created-site-evidence.json \
+  --runbook ~/allincms-projects/allincms-run/default-theme-bootstrap-runbook.json \
+  --bootstrap-evidence ~/allincms-projects/allincms-run/default-theme-bootstrap-evidence.json \
+  --output-dir ~/allincms-projects/allincms-run/default-theme-bootstrap-applied \
   --prepare-created-site-schema-capture \
-  --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-  --package /tmp/allincms-run/source-site-package.json \
-  --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-  --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
+  --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+  --package ~/allincms-projects/allincms-run/source-site-package.json \
+  --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+  --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
   --fail-on-invalid
 ```
 

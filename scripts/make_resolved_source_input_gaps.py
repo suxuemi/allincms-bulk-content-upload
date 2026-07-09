@@ -122,7 +122,7 @@ def main() -> int:
         "--resolved-gap",
         action="append",
         default=[],
-        help="Repeatable: fieldLabel=products.specifications|proof=/tmp/redacted.json|note=Later proof superseded this gap.",
+        help="Repeatable: fieldLabel=products.specifications|proof=~/allincms-projects/redacted.json|note=Later proof superseded this gap.",
     )
     parser.add_argument("--output", required=True)
     parser.add_argument("--json", action="store_true")

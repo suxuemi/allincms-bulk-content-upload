@@ -86,14 +86,14 @@ If an operation-time gap ledger exists, pass it into the requirements builder:
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/record_source_input_gap.py \
   --validate-only \
-  --output /tmp/allincms-source-input-gap-ledger.json \
+  --output ~/allincms-projects/allincms-source-input-gap-ledger.json \
   --site-key current-site-key
 
 python3 skills/allincms-bulk-content-upload/scripts/make_source_input_requirements.py \
   --site-key current-site-key \
   --content-types products,posts,forms,media,themes/pages,site-info,routes,domains,tracking,navigation \
-  --gap-ledger /tmp/allincms-source-input-gap-ledger.json \
-  --output /tmp/allincms-source-input-requirements.json
+  --gap-ledger ~/allincms-projects/allincms-source-input-gap-ledger.json \
+  --output ~/allincms-projects/allincms-source-input-requirements.json
 ```
 
 The requirements builder also validates supplied ledgers, but run `--validate-only` explicitly when a ledger was hand-merged, produced by parallel read-only agents, or reused after context compaction. The resulting `operationGaps` block is part of the source-intake contract. Use it before extracting user PDFs, catalogs, websites, spreadsheets, or briefs. Static field requirements explain the common model fields; operation gaps explain fields discovered during the current browser run, including fields not yet covered by a reusable static section. If `operationGaps.blockedFields` is non-empty, keep those fields out of live upload until schema capture, user confirmation, or an explicit omission/no-body/no-image acceptance rule resolves them.
@@ -109,7 +109,7 @@ Because gap ledgers are append-only run evidence, do not edit old rows just to m
   "resolvedGaps": [
     {
       "fieldLabel": "products.specifications",
-      "proof": "/tmp/redacted-product-spec-final-audit.json",
+      "proof": "~/allincms-projects/redacted-product-spec-final-audit.json",
       "note": "Later browser/frontend verification proved the old specification blocker was resolved."
     }
   ]
@@ -122,9 +122,9 @@ Then run:
 python3 skills/allincms-bulk-content-upload/scripts/make_source_input_requirements.py \
   --site-key current-site-key \
   --content-types products,posts,forms,media,themes/pages,site-info,routes,domains,tracking,navigation \
-  --gap-ledger /tmp/allincms-source-input-gap-ledger.json \
-  --resolved-gap-evidence /tmp/allincms-resolved-source-input-gaps.json \
-  --output /tmp/allincms-source-input-requirements.json
+  --gap-ledger ~/allincms-projects/allincms-source-input-gap-ledger.json \
+  --resolved-gap-evidence ~/allincms-projects/allincms-resolved-source-input-gaps.json \
+  --output ~/allincms-projects/allincms-source-input-requirements.json
 ```
 
 The resolved evidence filters superseded operation gaps out of `operationGaps.blockedFields` and `blockedUntil` while preserving them under `resolvedEntries` for audit. Use this for fields that were later browser-verified, explicitly hidden for demo scope, or deferred with clear public cleanup proof. Do not use it to bypass source fields that still need a user decision or schema capture.

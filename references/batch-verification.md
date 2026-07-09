@@ -62,10 +62,10 @@ When a draft manifest came from source-package export, upgrade it with validated
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_save_capture_to_manifest.py \
-  --manifest /tmp/allincms-products-draft-manifest.json \
-  --save-capture-evidence /tmp/allincms-products-save-capture-evidence.json \
-  --base-run-evidence /tmp/allincms-products-run-evidence-after-save-capture.json \
-  --output /tmp/allincms-products-schema-verified-manifest.json
+  --manifest ~/allincms-projects/allincms-products-draft-manifest.json \
+  --save-capture-evidence ~/allincms-projects/allincms-products-save-capture-evidence.json \
+  --base-run-evidence ~/allincms-projects/allincms-products-run-evidence-after-save-capture.json \
+  --output ~/allincms-projects/allincms-products-schema-verified-manifest.json
 ```
 
 Run `validate_manifest.py --require-schema-verified` on the output. The helper binds one content type to one current-site capture; products and posts must be processed separately.
@@ -113,9 +113,9 @@ For local rehearsal, generate a neutral draft manifest and confirm the expected 
 python3 skills/allincms-bulk-content-upload/scripts/simulate_manifest_rehearsal.py \
   --site-key simsite01 \
   --content-type products \
-  --output-dir /tmp/allincms-manifest-rehearsal
+  --output-dir ~/allincms-projects/allincms-manifest-rehearsal
 python3 skills/allincms-bulk-content-upload/scripts/validate_manifest_rehearsal.py \
-  /tmp/allincms-manifest-rehearsal/manifest-rehearsal-summary.json
+  ~/allincms-projects/allincms-manifest-rehearsal/manifest-rehearsal-summary.json
 ```
 
 This rehearsal must pass generic draft validation and fail `--require-schema-verified` with `schemaVerified` and `payloadTemplate` errors. A generic draft manifest is source normalization proof only, not upload permission.
@@ -130,15 +130,15 @@ For source-package manifests, use a manifest sample stage after the schema gate 
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_manifest_sample_upload_runbook.py \
-  --manifest /tmp/allincms-products-schema-verified-manifest.json \
+  --manifest ~/allincms-projects/allincms-products-schema-verified-manifest.json \
   --target https://workspace.laicms.com/example/products \
   --sample-slug example-product \
-  --authorization-output /tmp/allincms-authorization-products-sample.json \
-  --output /tmp/allincms-products-sample-runbook.json
+  --authorization-output ~/allincms-projects/allincms-authorization-products-sample.json \
+  --output ~/allincms-projects/allincms-products-sample-runbook.json
 python3 skills/allincms-bulk-content-upload/scripts/validate_manifest_sample_upload_evidence.py \
-  /tmp/allincms-products-sample-evidence.json \
-  --manifest /tmp/allincms-products-schema-verified-manifest.json \
-  --output /tmp/allincms-products-sample-validation.json
+  ~/allincms-projects/allincms-products-sample-evidence.json \
+  --manifest ~/allincms-projects/allincms-products-schema-verified-manifest.json \
+  --output ~/allincms-projects/allincms-products-sample-validation.json
 ```
 
 This is separate from the older `Codex Probe - Delete Me` sample path. Probe sample proof can validate schema and route behavior, but a source-generated manifest also needs one manifest item to prove the manifest's actual title/body/media mapping before batch upload.
@@ -149,18 +149,18 @@ For source-package runs, apply the validated sample evidence back into the sourc
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_manifest_sample_upload.py \
-  --manifest /tmp/allincms-products-schema-verified-manifest.json \
-  --sample-evidence /tmp/allincms-products-sample-evidence.json \
-  --package /tmp/allincms-run/source-site-package.json \
-  --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-  --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-  --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-  --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-  --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-  --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-  --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-  --upload-readiness /tmp/allincms-run/schema-capture/products-schema-manifest-sample/products-upload-readiness.json \
-  --output-dir /tmp/allincms-run/manifest-sample-applied
+  --manifest ~/allincms-projects/allincms-products-schema-verified-manifest.json \
+  --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+  --package ~/allincms-projects/allincms-run/source-site-package.json \
+  --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+  --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+  --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+  --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+  --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+  --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+  --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+  --upload-readiness ~/allincms-projects/allincms-run/schema-capture/products-schema-manifest-sample/products-upload-readiness.json \
+  --output-dir ~/allincms-projects/allincms-run/manifest-sample-applied
 ```
 
 The apply helper writes a sample validation report, one progress-log seed entry, and `source-execution-status.after-manifest-sample.json`. A standalone `validate_manifest_sample_upload_evidence.py` pass proves the sample file shape; it does not by itself update the source-package execution boundary. Follow the refreshed `currentStage`; only `batch_upload` means batch preparation is the next source-stage boundary.
@@ -169,28 +169,28 @@ When multiple draft manifests exist, build a deterministic readiness report befo
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_manifest_upload_readiness.py \
-  /tmp/allincms-products-draft-manifest.json \
-  /tmp/allincms-posts-draft-manifest.json \
-  --output /tmp/allincms-upload-readiness-report.json
+  ~/allincms-projects/allincms-products-draft-manifest.json \
+  ~/allincms-projects/allincms-posts-draft-manifest.json \
+  --output ~/allincms-projects/allincms-upload-readiness-report.json
 ```
 
 If any manifest item contains `categories`, `tags`, or `categoryIds`, include the validated taxonomy execution report:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_manifest_upload_readiness.py \
-  /tmp/allincms-products-schema-verified-manifest.json \
-  /tmp/allincms-posts-schema-verified-manifest.json \
-  --taxonomy-validation /tmp/allincms-taxonomy-execution-validation.json \
-  --output /tmp/allincms-upload-readiness-report.json
+  ~/allincms-projects/allincms-products-schema-verified-manifest.json \
+  ~/allincms-projects/allincms-posts-schema-verified-manifest.json \
+  --taxonomy-validation ~/allincms-projects/allincms-taxonomy-execution-validation.json \
+  --output ~/allincms-projects/allincms-upload-readiness-report.json
 ```
 
 Use the report's `overallStatus`, `readyCount`, `blockedCount`, and per-manifest `taxonomyGate` in the handoff. `overallStatus: blocked` is the correct result until every manifest has `schemaVerified: true`, a current-site `fieldMapping`, a captured `payloadTemplate`, and `taxonomyGate.ok=true` when taxonomy fields are present. Add `--fail-on-blocked` in automation that must stop before any live upload:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_manifest_upload_readiness.py \
-  /tmp/allincms-products-draft-manifest.json \
-  /tmp/allincms-posts-draft-manifest.json \
-  --output /tmp/allincms-upload-readiness-report.json \
+  ~/allincms-projects/allincms-products-draft-manifest.json \
+  ~/allincms-projects/allincms-posts-draft-manifest.json \
+  --output ~/allincms-projects/allincms-upload-readiness-report.json \
   --fail-on-blocked
 ```
 
@@ -248,41 +248,41 @@ After batch upload and before final frontend audit, generate the audit URL/statu
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_final_frontend_audit_inputs.py \
-  --manifest /tmp/allincms-schema-verified-manifest.json \
-  --progress-log /tmp/allincms-batch-progress.json \
+  --manifest ~/allincms-projects/allincms-schema-verified-manifest.json \
+  --progress-log ~/allincms-projects/allincms-batch-progress.json \
   --require-schema-verified \
   --require-progress-complete \
   --static-paths /,/products,/about-us,/contact-us \
-  --urls-output /tmp/allincms-final-audit-urls.txt \
-  --statuses-output /tmp/allincms-final-expected-statuses.json \
-  --summary-output /tmp/allincms-final-audit-inputs-summary.json
+  --urls-output ~/allincms-projects/allincms-final-audit-urls.txt \
+  --statuses-output ~/allincms-projects/allincms-final-expected-statuses.json \
+  --summary-output ~/allincms-projects/allincms-final-audit-inputs-summary.json
 
 python3 skills/allincms-bulk-content-upload/scripts/audit_frontend_rendering.py \
   --json --redact \
   --timeout 8 --max-bytes 2000000 \
-  --urls-file /tmp/allincms-final-audit-urls.txt \
-  --expect-statuses-file /tmp/allincms-final-expected-statuses.json \
-  > /tmp/allincms-final-audit-report.json
+  --urls-file ~/allincms-projects/allincms-final-audit-urls.txt \
+  --expect-statuses-file ~/allincms-projects/allincms-final-expected-statuses.json \
+  > ~/allincms-projects/allincms-final-audit-report.json
 ```
 
 For mixed products/posts launches, pass every schema-verified manifest to the same final-audit input generator. Use one combined completed progress log, or repeat `--progress-log` in the same order as the manifests:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_final_frontend_audit_inputs.py \
-  --manifest /tmp/allincms-products-schema-verified-manifest.json \
-  --manifest /tmp/allincms-posts-schema-verified-manifest.json \
-  --progress-log /tmp/allincms-combined-batch-progress.json \
+  --manifest ~/allincms-projects/allincms-products-schema-verified-manifest.json \
+  --manifest ~/allincms-projects/allincms-posts-schema-verified-manifest.json \
+  --progress-log ~/allincms-projects/allincms-combined-batch-progress.json \
   --require-schema-verified \
   --require-progress-complete \
   --static-paths /,/products,/posts,/about-us,/contact-us \
-  --urls-output /tmp/allincms-final-audit-urls.txt \
-  --statuses-output /tmp/allincms-final-expected-statuses.json \
-  --summary-output /tmp/allincms-final-audit-inputs-summary.json
+  --urls-output ~/allincms-projects/allincms-final-audit-urls.txt \
+  --statuses-output ~/allincms-projects/allincms-final-expected-statuses.json \
+  --summary-output ~/allincms-projects/allincms-final-audit-inputs-summary.json
 ```
 
 Do not run separate final audits and claim the whole site is accepted from only one content type. A products manifest proves product detail coverage only; a posts manifest proves post detail coverage only. The final URL/status files must include every planned uploaded products/posts slug plus the in-scope static routes before launch acceptance.
 
-The generated URL/status files are runtime artifacts and may contain concrete slugs; keep them in `/tmp` or the current run evidence folder, not in the skill. Only copy the redacted audit report or the generated evidence block into durable run evidence.
+The generated URL/status files are runtime artifacts and may contain concrete slugs; keep them in `~/allincms-projects` or the current run evidence folder, not in the skill. Only copy the redacted audit report or the generated evidence block into durable run evidence.
 
 Redacted final audit reports must still bind back to the concrete runtime URLs. Use `audit_frontend_rendering.py --redact`, which preserves `urlFingerprint` while replacing detail URLs with `/products/{slug}` or `/posts/{slug}`. Final audit stage generation must compare the expected concrete URL fingerprints from `expectedStatuses` against the redacted report fingerprints. Route pattern coverage and instance counts are not enough for final acceptance because the wrong product/post slug can otherwise satisfy the same route pattern.
 
@@ -296,10 +296,10 @@ For staged browser execution, convert the final audit report into a stage result
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/make_final_frontend_audit_stage_result.py \
-  --packet-json /tmp/allincms-full-rehearsal/next-browser-stage-packet-after-forms-media-settings-complete.json \
-  --audit-report-json /tmp/allincms-final-audit-report.json \
-  --evidence-pointers /tmp/allincms-final-audit-report.json,/tmp/allincms-final-audit-inputs-summary.json \
-  --output /tmp/allincms-final-frontend-audit-stage-result.json
+  --packet-json ~/allincms-projects/allincms-full-rehearsal/next-browser-stage-packet-after-forms-media-settings-complete.json \
+  --audit-report-json ~/allincms-projects/allincms-final-audit-report.json \
+  --evidence-pointers ~/allincms-projects/allincms-final-audit-report.json,~/allincms-projects/allincms-final-audit-inputs-summary.json \
+  --output ~/allincms-projects/allincms-final-frontend-audit-stage-result.json
 ```
 
 The helper records `completed` only when the report contains the required HTTP status, DOM/rich-text, image, and empty broken-entry proof. Any status mismatch, raw Markdown residue, DOM/rich-text issue, or image issue produces a `partial` result and must keep cleanup locked.
@@ -328,14 +328,14 @@ python3 skills/allincms-bulk-content-upload/scripts/make_launch_audit_inputs.py 
   --frontend-base-url https://example.web.allincms.com \
   --static-paths /,/home,/products,/solutions,/about-us,/contact-us \
   --detail-probe-paths /products/codex-probe-delete-me,/posts/codex-probe-delete-me \
-  --urls-output /tmp/allincms-launch-audit-urls.txt \
-  --statuses-output /tmp/allincms-launch-expected-statuses.json
+  --urls-output ~/allincms-projects/allincms-launch-audit-urls.txt \
+  --statuses-output ~/allincms-projects/allincms-launch-expected-statuses.json
 
 python3 skills/allincms-bulk-content-upload/scripts/audit_frontend_rendering.py \
   --json --redact \
   --timeout 8 --max-bytes 2000000 \
-  --urls-file /tmp/allincms-launch-audit-urls.txt \
-  --expect-statuses-file /tmp/allincms-launch-expected-statuses.json
+  --urls-file ~/allincms-projects/allincms-launch-audit-urls.txt \
+  --expect-statuses-file ~/allincms-projects/allincms-launch-expected-statuses.json
 ```
 
 The status map keys must match the original URL strings from the URL file or command arguments.
@@ -346,13 +346,13 @@ To reuse the audit output inside run evidence, write the redacted JSON report to
 python3 skills/allincms-bulk-content-upload/scripts/audit_frontend_rendering.py \
   --json --redact \
   --timeout 8 --max-bytes 2000000 \
-  --urls-file /tmp/allincms-launch-audit-urls.txt \
-  --expect-statuses-file /tmp/allincms-launch-expected-statuses.json \
-  > /tmp/allincms-launch-audit-report.json
+  --urls-file ~/allincms-projects/allincms-launch-audit-urls.txt \
+  --expect-statuses-file ~/allincms-projects/allincms-launch-expected-statuses.json \
+  > ~/allincms-projects/allincms-launch-audit-report.json
 
 python3 skills/allincms-bulk-content-upload/scripts/make_frontend_rendering_evidence.py \
-  /tmp/allincms-launch-audit-report.json \
-  --output /tmp/allincms-frontend-rendering-evidence.json
+  ~/allincms-projects/allincms-launch-audit-report.json \
+  --output ~/allincms-projects/allincms-frontend-rendering-evidence.json
 ```
 
 The generated JSON contains a top-level `frontendRendering` object that can be copied or merged into run evidence before `validate_run_evidence.py`.
@@ -363,9 +363,9 @@ For existing-site read-only launch evidence, pass that generated file directly t
 python3 skills/allincms-bulk-content-upload/scripts/make_existing_site_readonly_evidence.py \
   --site-key example \
   --existing-site-keys example \
-  --frontend-rendering-evidence /tmp/allincms-frontend-rendering-evidence.json \
+  --frontend-rendering-evidence ~/allincms-projects/allincms-frontend-rendering-evidence.json \
   ...other required read-only evidence fields... \
-  --output /tmp/allincms-readonly-launch-evidence.json
+  --output ~/allincms-projects/allincms-readonly-launch-evidence.json
 ```
 
 Use `--no-repo-check-passed --repo-check-note "..."` for partial read-only evidence when the wider workspace has unrelated dirty files or repo checks were intentionally not run. Do not write `--repo-check-passed=false`.
@@ -506,18 +506,18 @@ Before browser execution, generate a batch runbook from the schema-verified mani
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_batch_upload_publish_runbook.py \
-  --run-evidence /tmp/allincms-run-evidence-after-save-capture.json \
-  --manifest /tmp/allincms-schema-verified-manifest.json \
-  --sample-evidence /tmp/allincms-products-sample-evidence.json \
+  --run-evidence ~/allincms-projects/allincms-run-evidence-after-save-capture.json \
+  --manifest ~/allincms-projects/allincms-schema-verified-manifest.json \
+  --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
   --target https://workspace.laicms.com/example/products \
   --target-identifier "products manifest batch" \
-  --authorization-output /tmp/allincms-authorization-batch-upload.json \
-  --output /tmp/allincms-batch-upload-runbook.json
+  --authorization-output ~/allincms-projects/allincms-authorization-batch-upload.json \
+  --output ~/allincms-projects/allincms-batch-upload-runbook.json
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action batch_upload \
-  --preflight /tmp/allincms-run-evidence-after-save-capture.json \
-  --authorization /tmp/allincms-authorization-batch-upload.json \
-  --sample-evidence /tmp/allincms-products-sample-evidence.json
+  --preflight ~/allincms-projects/allincms-run-evidence-after-save-capture.json \
+  --authorization ~/allincms-projects/allincms-authorization-batch-upload.json \
+  --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json
 ```
 
 The runbook remains preparation only until the `batch_upload` authorization record exists and the pre-mutation gate passes.
@@ -526,11 +526,11 @@ After the batch browser run, validate the evidence before treating the batch as 
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_batch_upload_publish_evidence.py \
-  /tmp/allincms-batch-upload-evidence.json \
-  --manifest /tmp/allincms-schema-verified-manifest.json \
-  --base-run-evidence /tmp/allincms-run-evidence-after-publish-sample.json \
-  --frontend-audit-report /tmp/allincms-final-audit-report.json \
-  --output /tmp/allincms-batch-upload-validation.json
+  ~/allincms-projects/allincms-batch-upload-evidence.json \
+  --manifest ~/allincms-projects/allincms-schema-verified-manifest.json \
+  --base-run-evidence ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --frontend-audit-report ~/allincms-projects/allincms-final-audit-report.json \
+  --output ~/allincms-projects/allincms-batch-upload-validation.json
 ```
 
 The validator requires the manifest schema gate, base sample verification, complete progress log, matching backend/frontend URL prefixes, `bodyVerified: true` for every item, and an empty redacted frontend detail audit issue list. A backend progress log without a DOM/rich-text audit does not unlock final QA or cleanup.
@@ -539,21 +539,21 @@ For source-package runs, apply the batch evidence back into the source execution
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/apply_batch_upload_publish.py \
-  --batch-evidence /tmp/allincms-batch-upload-evidence.json \
-  --manifest /tmp/allincms-schema-verified-manifest.json \
-  --base-run-evidence /tmp/allincms-run-evidence-after-publish-sample.json \
-  --frontend-audit-report /tmp/allincms-final-audit-report.json \
-  --package /tmp/allincms-run/source-site-package.json \
-  --confirmation /tmp/allincms-run/execution/confirmation-record.json \
-  --execution-plan /tmp/allincms-run/execution/confirmed-site-execution-plan.json \
-  --artifact-readiness /tmp/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
-  --created-site-binding /tmp/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
-  --pages-site-info-handoff /tmp/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
-  --pages-site-info-validation /tmp/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
-  --schema-capture-handoff /tmp/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
-  --upload-readiness /tmp/allincms-run/upload-readiness.json \
-  --sample-evidence /tmp/allincms-products-sample-evidence.json \
-  --output-dir /tmp/allincms-run/batch-applied
+  --batch-evidence ~/allincms-projects/allincms-batch-upload-evidence.json \
+  --manifest ~/allincms-projects/allincms-schema-verified-manifest.json \
+  --base-run-evidence ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --frontend-audit-report ~/allincms-projects/allincms-final-audit-report.json \
+  --package ~/allincms-projects/allincms-run/source-site-package.json \
+  --confirmation ~/allincms-projects/allincms-run/execution/confirmation-record.json \
+  --execution-plan ~/allincms-projects/allincms-run/execution/confirmed-site-execution-plan.json \
+  --artifact-readiness ~/allincms-projects/allincms-run/execution/confirmed-artifacts/artifact-readiness.json \
+  --created-site-binding ~/allincms-projects/allincms-run/created-site-schema-capture/created-site-artifact-binding.json \
+  --pages-site-info-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/pages-site-info/pages-site-info-browser-handoff.json \
+  --pages-site-info-validation ~/allincms-projects/allincms-run/pages-site-info-applied/pages-site-info-execution-validation.json \
+  --schema-capture-handoff ~/allincms-projects/allincms-run/created-site-schema-capture/schema-capture-handoff.json \
+  --upload-readiness ~/allincms-projects/allincms-run/upload-readiness.json \
+  --sample-evidence ~/allincms-projects/allincms-products-sample-evidence.json \
+  --output-dir ~/allincms-projects/allincms-run/batch-applied
 ```
 
 The apply helper writes a batch validation report, a batch progress log artifact, and `source-execution-status.after-batch-upload.json`. A standalone `validate_batch_upload_publish_evidence.py` pass proves the batch evidence shape; it does not by itself update the source-package execution boundary. Follow the refreshed `currentStage`; only `forms_media_settings` means batch proof has been accepted and the next gate is site-info/forms/media/domains/tracking proof or explicit deferral. Do not jump from batch proof directly to launch acceptance.
@@ -603,8 +603,8 @@ For probe cleanup, prefer the dedicated `cleanup_probe` action and gate:
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/check_pre_mutation_gate.py \
   --action cleanup_probe \
-  --preflight /tmp/allincms-existing-site-readonly-evidence.json \
-  --authorization /tmp/allincms-authorization-cleanup-product-probe.json
+  --preflight ~/allincms-projects/allincms-existing-site-readonly-evidence.json \
+  --authorization ~/allincms-projects/allincms-authorization-cleanup-product-probe.json
 ```
 
 Do not use a previous create, save, publish, upload, or generic cleanup authorization as permission to delete or unpublish a probe.
@@ -615,9 +615,9 @@ After sample verification is merged and `summarize_run_status.py` emits `authori
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/build_probe_cleanup_runbook.py \
-  --run-evidence /tmp/allincms-run-evidence-after-publish-sample.json \
-  --authorization-output /tmp/allincms-cleanup-probe-authorization.json \
-  --output /tmp/allincms-cleanup-probe-runbook.json
+  --run-evidence ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --authorization-output ~/allincms-projects/allincms-cleanup-probe-authorization.json \
+  --output ~/allincms-projects/allincms-cleanup-probe-runbook.json
 ```
 
 The runbook is local preparation only. It must retain the authorization placeholder and `browserStepsExecutable: false` until the `cleanup_probe` authorization record exists and the cleanup gate passes. The only gated mutation is deleting or unpublishing the Codex Probe item; cleaning real business content, upload, batch, replay, or a second cleanup action remain forbidden.
@@ -626,17 +626,17 @@ After the cleanup browser run, validate and merge cleanup proof:
 
 ```bash
 python3 skills/allincms-bulk-content-upload/scripts/validate_probe_cleanup_evidence.py \
-  /tmp/allincms-cleanup-evidence.json \
-  --base-run-evidence /tmp/allincms-run-evidence-after-publish-sample.json \
-  --merge-args-output /tmp/allincms-cleanup-merge-args.json \
-  --output /tmp/allincms-cleanup-validation.json
+  ~/allincms-projects/allincms-cleanup-evidence.json \
+  --base-run-evidence ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --merge-args-output ~/allincms-projects/allincms-cleanup-merge-args.json \
+  --output ~/allincms-projects/allincms-cleanup-validation.json
 python3 skills/allincms-bulk-content-upload/scripts/merge_probe_evidence.py \
-  --base /tmp/allincms-run-evidence-after-publish-sample.json \
-  --cleanup-evidence /tmp/allincms-cleanup-evidence.json \
-  --output /tmp/allincms-run-evidence-after-cleanup.json
+  --base ~/allincms-projects/allincms-run-evidence-after-publish-sample.json \
+  --cleanup-evidence ~/allincms-projects/allincms-cleanup-evidence.json \
+  --output ~/allincms-projects/allincms-run-evidence-after-cleanup.json
 python3 skills/allincms-bulk-content-upload/scripts/summarize_run_status.py \
-  /tmp/allincms-run-evidence-after-cleanup.json \
-  --output /tmp/allincms-run-summary-after-cleanup.json
+  ~/allincms-projects/allincms-run-evidence-after-cleanup.json \
+  --output ~/allincms-projects/allincms-run-summary-after-cleanup.json
 ```
 
 Cleanup evidence normally includes a non-empty `cleanedCandidates` list whose `titlePattern` includes `Codex Probe - Delete Me`, `cleanedCount` matching the list length, backend proof that the probe is absent/unpublished, frontend proof that the detail route no longer renders probe content, and the same base `siteKey/contentType` as the run evidence.

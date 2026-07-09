@@ -266,7 +266,7 @@ def apply_action(args: argparse.Namespace) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Record AllinCMS source-input field gaps into a local run ledger.")
-    parser.add_argument("--output", required=True, help="Ledger JSON path outside the skill package, usually /tmp/...")
+    parser.add_argument("--output", required=True, help="Ledger JSON path outside the skill package, usually ~/allincms-projects/...")
     parser.add_argument("--action", choices=sorted(VALID_ACTIONS), default="append")
     parser.add_argument("--site-key", default="", help="Optional site key; avoid account/private labels")
     parser.add_argument("--content-type", choices=sorted(SUPPORTED_CONTENT_TYPES), default="global")

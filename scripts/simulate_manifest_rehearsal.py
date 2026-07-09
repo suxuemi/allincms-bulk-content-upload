@@ -108,7 +108,7 @@ def build_simulated_gap_ledger(site_key: str, content_type: str) -> dict[str, An
                 "generationRule": "Generate structured spec rows only after the current-site specification schema is captured.",
                 "currentEvidence": "simulated-only",
                 "decisionNeeded": "needs-schema-capture",
-                "evidencePointer": "/tmp/allincms-simulated-product-field-gap.json",
+                "evidencePointer": "~/allincms-projects/allincms-simulated-product-field-gap.json",
                 "operatorNote": "Local rehearsal gap; no LAICMS browser state was mutated.",
             }
         ]
@@ -124,7 +124,7 @@ def build_simulated_gap_ledger(site_key: str, content_type: str) -> dict[str, An
                 "generationRule": "Convert source text into the captured posts editor block schema; do not upload raw Markdown.",
                 "currentEvidence": "simulated-only",
                 "decisionNeeded": "needs-schema-capture",
-                "evidencePointer": "/tmp/allincms-simulated-post-field-gap.json",
+                "evidencePointer": "~/allincms-projects/allincms-simulated-post-field-gap.json",
                 "operatorNote": "Local rehearsal gap; no LAICMS browser state was mutated.",
             }
         ]
