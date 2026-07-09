@@ -30,12 +30,27 @@ KIND = "allincms_run_mode_decision"
 MODES = ("from_scratch", "template_conversion", "incremental_update")
 
 CONFIRMATION_PROMPT = (
-    "This is an EXISTING site. Which is it? "
-    "(A) a from-template / old-brand CONVERSION — I will scan the WHOLE site and BLOCK on any old "
-    "brand / product / category chip / contact residue before launch; or "
-    "(B) a DAILY INCREMENTAL update to a site that is already yours and clean — I will SKIP the "
-    "whole-site residue scan and only quality-check the new/changed items. "
-    "Until you tell me, I treat it as a conversion and keep the residue gate ON."
+    "ASK THE USER before treating an existing site as clean — in THEIR OWN language, in plain everyday "
+    "words, no jargon (do not say 'residue'/'gate'/'conversion'/'incremental'). Use the ready-made "
+    "wording below, and make sure they can tell the two cases apart AND understand what happens if they "
+    "pick wrong.\n\n"
+    "【中文·请照这个问】你选的是一个【已经存在的网站】。先确认一件事,免得弄错——它现在是下面哪种?\n"
+    "  ① 它现在还是个「演示模板」或「别人的旧网站」,你要把它改造成你自己的品牌。\n"
+    "     (页面上还留着一堆不是你的东西:别的公司名、别的产品、别的联系方式、样例文章…)\n"
+    "     → 我会把整个网站从头到尾扫一遍,只要还有一处旧内容没清干净,就拦住不让上线。\n"
+    "  ② 它已经是【你自己的】网站,内容都是对的、干净的,你这次只是来加一点或改一点。\n"
+    "     (比如上一个新产品、改一篇文章)\n"
+    "     → 我就不做全站大扫除了,只检查你这次新加或改动的内容。\n"
+    "  选 ① 还是 ②?  ⚠ 说错的后果:本该是①(改造)你却选了②,那些旧公司名、旧产品、旧联系方式\n"
+    "  会悄悄留在你上线的网站上、没人发现;本该是②你选了①,最多我白扫一遍、没坏处。\n"
+    "  所以——拿不准就选 ①。你不回答的话,我默认按 ①(全站扫),宁可多扫,也绝不漏掉旧内容。\n\n"
+    "【EN·same question】Your existing site — which is it? (1) still a demo template / someone else's old "
+    "site you're rebranding (pages still show names, products, contacts, sample articles that aren't "
+    "yours) → I sweep the WHOLE site and block launch if ANY old content is left; or (2) already YOUR "
+    "own clean site, you're just adding/editing a little → I skip the sweep and only check new/changed "
+    "items. If it's really (1) but you say (2), old names/products/contacts silently stay on your live "
+    "site; if (2) but you say (1), worst case I sweep once for nothing. When unsure, pick (1). No answer "
+    "= I default to (1), full sweep ON."
 )
 
 
