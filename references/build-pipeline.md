@@ -26,7 +26,10 @@ confirmation→execution);本文把它和**工作区结构**(`references/workspa
 - **run-mode(第5步)**:决定第7步残留闸适不适用。新建站(`from_scratch`)/ 改造站(`template_conversion`)
   = 要残留闸;日常更新自有干净站(`incremental_update`)= 跳过。**已有站分不清,必须问用户**(见其 confirmationPrompt)。
 - **残留闸(第7步 · 上线前)**:旧模板内容清没清——喂全站每条路由的可见文本 + 旧内容黑名单,逐页扫,
-  零命中才 launch。（`incremental` 模式此步自动跳过。）
+  零命中才 launch。（`incremental` 模式此步自动跳过。）发现残留后,用
+  `plan_residue_fixes.py --report run/residue-report.json` 把 hits 按类型分派成修复工作单
+  (分类 chip→后台 tab、产品/文章→各自 JSON save、全局块→对应 designer layer、单页→theme page),
+  逐组修 → 复验该组路由 → 再全站跑残留闸,到零才 launch。
 
 ## 看进度 / 续跑
 
