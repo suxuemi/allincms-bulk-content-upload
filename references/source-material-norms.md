@@ -140,6 +140,7 @@ flowchart LR
 | 收集清单 | `site-content-and-aesthetics-spec.md` Information Intake Checklist | 建站需收齐哪些信息 |
 | 写作结构/下限 | 同文件 Per-Type Content Floors + Professional Copy Standard | 产品 3 段 what/how/applications、文章 hook→机制→映射→CTA |
 | source-wiki 结构契约 | `source-files-to-site-package.md` | `products[*].content`/`specifications`/`sourceRefs` 的形状 |
-| 硬性强制 | `validate_source_site_package.py` | publication-ready floors、占位/PII 拒绝、policy 必填集 |
+| 硬性强制·结构 | `validate_source_site_package.py` | publication-ready floors、token 占位/PII 拒绝、policy 必填集 |
+| 硬性强制·内容质量（发布前闸） | `check_content_quality.py` | 库存图/产品图缺 alt/未替换占位=硬拦(block)；规格-品类冲突/参数表过薄(<3)/重复文案=warn + AI 自审清单。补结构校验够不着的"内容是不是真的、对不对题、够不够决策级" |
 
 **用法**：收集/整理资料时先对照本文件的"访问者要什么"，再落到 Intake Checklist 的字段，最后由校验器强制。三者一致：本文件说"为什么该有"，checklist 说"收什么"，校验器说"不达标就拒"。
