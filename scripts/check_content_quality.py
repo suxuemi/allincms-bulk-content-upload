@@ -43,6 +43,9 @@ HARD_PLACEHOLDERS = (
     re.compile(r"\blorem ipsum\b", re.IGNORECASE), re.compile(r"\bTODO\b"),
     re.compile(r"\[placeholder\]", re.IGNORECASE), re.compile(r"<placeholder>", re.IGNORECASE),
     re.compile(r"\bXYZ Corp\b", re.IGNORECASE),
+    # build_content_skeleton.py leaves "[fill: ...]" markers where source is missing — an unfilled
+    # skeleton must never publish, so its markers are hard placeholders too.
+    re.compile(r"\[fill:", re.IGNORECASE),
 )
 # "TBD" only as a standalone token — so a real model number like TBD-500 is NOT hard-blocked (BLOCK).
 TBD_STANDALONE = re.compile(r"(?<![\w-])TBD(?![\w-])")

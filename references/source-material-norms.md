@@ -139,6 +139,7 @@ flowchart LR
 | 上游·为什么（访问者依据） | **本文件** | 每个字段服务访问者哪一步决策；一坨 vs 合规的判据 |
 | 收集清单 | `site-content-and-aesthetics-spec.md` Information Intake Checklist | 建站需收齐哪些信息 |
 | 写作结构/下限 | 同文件 Per-Type Content Floors + Professional Copy Standard | 产品 3 段 what/how/applications、文章 hook→机制→映射→CTA |
+| 生成侧·骨架(correct-by-construction) | `build_content_skeleton.py` + `content-format-standard.md` | 生成时就把 body 排成 H2 分节 + 加粗 + 列表 + CTA 的 Slate 骨架,AI 只填真实 leaf 文本;source 缺字段→`needs`/`ready=false`,不编造。让格式合规「生成即成立」,不靠事后补 |
 | source-wiki 结构契约 | `source-files-to-site-package.md` | `products[*].content`/`specifications`/`sourceRefs` 的形状 |
 | 硬性强制·结构 | `validate_source_site_package.py` | publication-ready floors、token 占位/PII 拒绝、policy 必填集 |
 | 硬性强制·内容质量（发布前闸） | `check_content_quality.py` | 库存图/产品图缺 alt/未替换占位=硬拦(block)；规格-品类冲突/参数表过薄(<3)/重复文案=warn + AI 自审清单。补结构校验够不着的"内容是不是真的、对不对题、够不够决策级" |
