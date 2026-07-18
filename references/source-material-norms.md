@@ -20,7 +20,7 @@ owner: Tony
 
 这份是**上游规范**（收集资料时对照"要什么、为什么"）；下游的执行在：
 - 收集清单 → `site-content-and-aesthetics-spec.md` Information Intake Checklist
-- 写作结构/下限 → 同文件 Per-Type Content Floors + Professional Copy Standard
+- 写作结构/下限 → 同文件 Per-Type Content Floors + Professional Copy Standard；正文**排版格式**（标题层次/加粗/列表/CTA/信息架构）→ `content-format-standard.md`
 - 硬性强制 → `validate_source_site_package.py` + `source-files-to-site-package.md` 的 source-wiki 契约
 
 ## 访问者的决策旅程（反推资料要供什么）
@@ -142,5 +142,6 @@ flowchart LR
 | source-wiki 结构契约 | `source-files-to-site-package.md` | `products[*].content`/`specifications`/`sourceRefs` 的形状 |
 | 硬性强制·结构 | `validate_source_site_package.py` | publication-ready floors、token 占位/PII 拒绝、policy 必填集 |
 | 硬性强制·内容质量（发布前闸） | `check_content_quality.py` | 库存图/产品图缺 alt/未替换占位=硬拦(block)；规格-品类冲突/参数表过薄(<3)/重复文案=warn + AI 自审清单。补结构校验够不着的"内容是不是真的、对不对题、够不够决策级" |
+| 硬性强制·正文格式（发布前闸） | `check_content_format.py` + `content-format-standard.md` | 长正文零标题/列表/加粗=段落墙硬拦(block)；缺分节标题/加粗/列表/CTA/超长段落=warn。补"排版专不专业、读者扫不扫得懂、走不走得到下一步" |
 
 **用法**：收集/整理资料时先对照本文件的"访问者要什么"，再落到 Intake Checklist 的字段，最后由校验器强制。三者一致：本文件说"为什么该有"，checklist 说"收什么"，校验器说"不达标就拒"。
